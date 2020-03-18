@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Jsenlois">
 <meta property="og:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-03-18T10:31:25.899Z">
+<meta property="og:updated_time" content="2020-03-18T10:41:18.026Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="netty权威指南读书笔记_2020.01.25">
 <meta name="twitter:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
@@ -355,8 +355,7 @@
         <p>第一章：linux io 模型</p>
 <p>轮训：阻塞，非阻塞</p>
 <p>回调：I/O多路复用，信号，异步</p>
-<p>多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了select，fd大小不受限制，在socket层回调，只有活跃socket才会回调，无需遍历，使用内存映射，减少内存复制，epoll的api也更简洁</p>
-<p>第二章：BIO / NIO / AIO</p>
+<p>多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了select，fd大小不受限制，在socket层回调，只有活跃socket才会回调，无需遍历，使用内存映射，减少内存复制，epoll的api也更简洁<br><a id="more"></a><br>第二章：BIO / NIO / AIO</p>
 <p>BIO：同步阻塞IO，主要使用 ServerSocket Socket 对象，通过Input/OutputStream进行读写，每一个Client的请求，都相应的要在服务端创建一个线程来处理请求，可以直接压垮服务器</p>
 <p>改进BIO：把请求封装，放到任务队列，使用线程池处理任务队列，由于同步阻塞IO的原因如写快读慢，就可能导致线程处理过慢，任务队列累计，最终拒绝服务</p>
 <p>NIO：异步非阻塞IO，有阻塞/非阻塞模式，java 1.4使用的还是select模型，改进后使用了epoll，一个线程就可以处理多路复用的轮训就可以实现高并发的客户端接入，如果channel的活跃数量上升，epoll也会退化成select。主要使用ServerSocketChannel SocketChannel Selector对象，通过Channel加缓存Buffer进行读写，每一个Client都是多路复用器上的一个Channel，通过轮训多路复用器上的活跃channel，判断事件类型，并进行对应的处理，由于缓存的读写都是非阻塞的，所以存在读写半包的情况，NIO只是相对于BIO是异步的。</p>
