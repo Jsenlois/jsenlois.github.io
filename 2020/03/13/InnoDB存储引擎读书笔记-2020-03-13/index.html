@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta name="description" content="第一部分：存储引擎 主要内容：  InnoDB &amp;amp; MyISAM">
 <meta name="keywords" content="读书笔记">
 <meta property="og:type" content="article">
-<meta property="og:title" content="netty权威指南读书笔记_2020.01.25">
-<meta property="og:url" content="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/index.html">
+<meta property="og:title" content="InnoDB存储引擎读书笔记_2020.03.13">
+<meta property="og:url" content="http://yoursite.com/2020/03/13/InnoDB存储引擎读书笔记-2020-03-13/index.html">
 <meta property="og:site_name" content="Jsenlois">
-<meta property="og:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta property="og:description" content="第一部分：存储引擎 主要内容：  InnoDB &amp;amp; MyISAM">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-03-18T10:41:18.026Z">
+<meta property="og:updated_time" content="2020-03-18T11:00:44.483Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="netty权威指南读书笔记_2020.01.25">
-<meta name="twitter:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta name="twitter:title" content="InnoDB存储引擎读书笔记_2020.03.13">
+<meta name="twitter:description" content="第一部分：存储引擎 主要内容：  InnoDB &amp;amp; MyISAM">
 
 
 
@@ -120,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/03/13/InnoDB存储引擎读书笔记-2020-03-13/"/>
 
 
 
 
 
-  <title>netty权威指南读书笔记_2020.01.25 | Jsenlois</title>
+  <title>InnoDB存储引擎读书笔记_2020.03.13 | Jsenlois</title>
   
 
 
@@ -263,7 +263,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/13/InnoDB存储引擎读书笔记-2020-03-13/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Luo Yuzhi">
@@ -280,7 +280,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">netty权威指南读书笔记_2020.01.25</h1>
+          <h1 class="post-title" itemprop="name headline">InnoDB存储引擎读书笔记_2020.03.13</h1>
         
 
         <div class="post-meta">
@@ -292,8 +292,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-25T18:25:42+08:00">
-                2020-01-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-13T18:24:17+08:00">
+                2020-03-13
               </time>
             
 
@@ -352,92 +352,193 @@
       
 
       
-        <p>第一章：linux io 模型</p>
-<p>轮训：阻塞，非阻塞</p>
-<p>回调：I/O多路复用，信号，异步</p>
-<p>多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了select，fd大小不受限制，在socket层回调，只有活跃socket才会回调，无需遍历，使用内存映射，减少内存复制，epoll的api也更简洁<br><a id="more"></a><br>第二章：BIO / NIO / AIO</p>
-<p>BIO：同步阻塞IO，主要使用 ServerSocket Socket 对象，通过Input/OutputStream进行读写，每一个Client的请求，都相应的要在服务端创建一个线程来处理请求，可以直接压垮服务器</p>
-<p>改进BIO：把请求封装，放到任务队列，使用线程池处理任务队列，由于同步阻塞IO的原因如写快读慢，就可能导致线程处理过慢，任务队列累计，最终拒绝服务</p>
-<p>NIO：异步非阻塞IO，有阻塞/非阻塞模式，java 1.4使用的还是select模型，改进后使用了epoll，一个线程就可以处理多路复用的轮训就可以实现高并发的客户端接入，如果channel的活跃数量上升，epoll也会退化成select。主要使用ServerSocketChannel SocketChannel Selector对象，通过Channel加缓存Buffer进行读写，每一个Client都是多路复用器上的一个Channel，通过轮训多路复用器上的活跃channel，判断事件类型，并进行对应的处理，由于缓存的读写都是非阻塞的，所以存在读写半包的情况，NIO只是相对于BIO是异步的。</p>
-<p>AIO：真正的异步IO，主要使用AsynchronousSererverSocketChannel，AsynchronousSocketChannel 对象，通过Channel+Buffer异步读写数据</p>
-<p>第三章：Netty NIO 实现一个时间服务器</p>
-<p>NioEventLoopGroup 线程组，包含了一组NIO线程</p>
-<p>Bootstrap 辅助启动类 bind方法，connect方法</p>
-<p>ChannelInitializer</p>
-<p>ChannelHandlerAdapter 网络事件的读写操作</p>
-<p>Unpooled</p>
-<p>ByteBuf</p>
-<p>ChannelHandlerContext</p>
-<p>第四章：拆包/粘包的netty解决方案</p>
-<p>拆包/粘包的产生：应用层数据大于缓冲区的大小，TCP协议的读写滑动窗口会动态变化，TCP本身有个MSS的限制会导致TCP层的数据报拆分，以太网层有MTU限制会导致数据报拆分，</p>
-<p>解决方案：定长分割，分隔符分割，协议分割</p>
-<p>第五章：字符分割器，定长分割器的使用</p>
-<p>ServerBootStrap，BootStrap</p>
-<p>childHandler，handler</p>
-<p>ByteBuf同一个对象发多次的情况，要重置读写位置</p>
-<p>第六章：编解码</p>
-<p>java序列化：java内部的序列化协议，无法跨语言，编码性能低，编码之后的码流也太大</p>
-<p>编解码框架：</p>
-<p>Google Protobuf 机构化存储，高效，跨语言，跨平台，扩展性，官方支持java</p>
-<p>Facebook Thrift 解决大数据量的传输通信，跨语言调用</p>
-<p>JBoss Marshalling JBoss内部使用，应用范围有限</p>
-<p>第七章：MessagePack</p>
-<p>高效的二进制序列化框架，码流小，跨语言，api简单，Message注解</p>
-<p>解码channel：MessageToMessageDecoder</p>
-<p>编码channel：MessageToByteEncoder</p>
-<p>数据报定长分割器：</p>
-<p>LengthFieldPrepender：使用n个字节表示消息体长度</p>
-<p>LengthFieldBasedFrameDecoder：</p>
-<p>第八/九章</p>
-<p>Google Protobuf ，JBoss Marshalling</p>
-<p>第十章：Http协议开发（实现一个十分轻量级的服务端，跟Tomcat相比）</p>
-<p>实现Http协议的文件服务器：</p>
-<p>HttpRequestDecoder</p>
-<p>HttpObjectAggregator 将http request/response 聚合成 => FullHttpRequest,FullHttpResponse</p>
-<p>HttpResponseEncoder</p>
-<p>ChunkWriteHandler 支持异步发送大的码流</p>
-<p>SimpleChannelInboundHandler</p>
-<p>实现Http协议+json的协议栈：</p>
-<p>客户端：Order对象转json的encoder，json转Order对象的decoder</p>
-<p>服务端：json转Order的decoder，Order转json的encoder</p>
-<p>第十一章：websocket开发</p>
-<p>http的缺点：半双工，协议复杂，长轮询容易受攻击</p>
-<p>websocket：全双工；对代理，防火墙，路由器透明；协议简单（没有cookie，头部信息，身份验证）；没有安全开销；ping/pong保活；实时推送，无需轮询</p>
-<p>流程：client先使用http协议发起一次协议升级请求，Upgrade：websocket，server回复协议升级，即握手成功，所在netty里面需要判断消息类型（http请求消息，还是websocket的消息）,js好像没有发送ping的api，可以在server发送ping，接收client的pong</p>
-<p>核心类：</p>
-<p>WebSocketFrame:websocket 通信的抽象消息体（有关闭帧/文本/二进制/ping/pong消息等实现）</p>
-<p>WebSocketServerHandshakerFactory 构建协议升级请求的response，并动态加入WebSocketEncoder，WebSocketDecoder</p>
-<p>第十二章：私有协议开发</p>
-<p>定义消息结构，开发编解码器，开发消息处理器，处理自己关心的数据，然后放行数据，组合成client/server</p>
-<p>LengthFieldBasedFrameDecoder：定长分割器，要除去本身代表长度的字节长度，</p>
-<p>例如：|code（4B）|lenght（4B）|1B|2B|3B|4B| 放到ByteBuf之后readableBytes是18，除去code和length之后的协议长度是10</p>
-<p>MesagePack的限制是必须要使用Message注解，对于复杂对象+历史遗留原因，可能会出现某些对象无法加上该注解</p>
-<p>fireChannelRead，fireXXX channel链放行</p>
-<p>源码解读：</p>
-<p>ByteBuf：缓冲区</p>
-<p>堆外内存：I/O通信的时候少一次用户进程到内核的复制，高性能，但是内存回收不方便</p>
-<p>堆内存：用于I/O通信的时候，需要复制到内核的缓冲区，影响性能，但是内存管理方便</p>
-<p>池化内存区：对于高并发的情况，频繁申请/释放大的内存块影响性能，所以有了池化内存区，可以复用内存区，预先申请一大块的内存区域，分割成若干chunk，chuank再分为若干page，page组织方式是二叉树</p>
-<p>非池化内存：每次都重新开辟一块内存</p>
-<p>Channel/Unsafe</p>
-<p>channel负责链路的建立/关闭，读写，具体实现由Unsafe实现，可以获取eventloop</p>
-<p>ChannelPipeline/ChannelHandler</p>
-<p>ChannelPipeline用链表的形式组织ChannelHandler，支持动态增删改查</p>
-<p>EventLoop</p>
-<p>处理I/O任务跟非IO任务</p>
-<p>第二十章：netty 架构：</p>
-<p>高性能：异步非阻塞IO，堆外直接内存的使用，内存池的使用，环形缓冲区，reactor模型，正确的处理并发</p>
-<p>可靠：读写空闲时间的心跳检测</p>
-<p>第二十一章：多线程在netty中的使用</p>
-<p>synchronized() {</p>
+        <p>第一部分：存储引擎</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>InnoDB &amp; MyISAM<a id="more"></a></p>
+<ol>
+<li><p>目标：面向在线事务处理的应用，面向多维数据分析处理的应用</p>
+</li>
+<li><p>存储限制：64T，无</p>
+</li>
+<li><p>MVCC，非锁定读：支持，不支持</p>
+</li>
+<li><p>Geo处理：不支持，支持</p>
+</li>
+<li><p>自适应哈希：支持，不支持</p>
+</li>
+<li><p>聚簇索引：支持，不支持</p>
+</li>
+<li><p>数据缓存：支持，不支持</p>
+</li>
+<li><p>存储消耗，内存消耗：高，地</p>
+</li>
+<li><p>批量插入速度：慢，较快</p>
+</li>
+<li><p>外键：支持，不支持</p>
+</li>
+</ol>
+</li>
+<li><p>InnoDB</p>
+<ol>
+<li><p>插入缓冲</p>
+</li>
+<li><p>二次写</p>
+</li>
+<li><p>自适应hash</p>
+</li>
+<li><p>AIO（IO合并等优化）</p>
+</li>
+<li><p>刷新临接脏页</p>
+</li>
+</ol>
+</li>
+<li><p>索引</p>
+</li>
+<li><p>锁</p>
+<ol>
+<li><p>锁类型</p>
+<ol>
+<li><p>I锁</p>
+</li>
+<li><p>IX锁</p>
+</li>
+<li><p>S锁</p>
+</li>
+<li><p>X锁</p>
+</li>
+<li><p>锁关系:</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<hr>
+<pre><code>IS   IX   S   X
+</code></pre><p>  IS   1    1    1<br>  IX   1    1<br>  S    1         1<br>  X</p>
+<hr>
+<ol>
+<li><p>锁引申</p>
+<ol>
+<li><p>一致性非锁定读</p>
+<ol>
+<li>MVCC实现，通过读取行记录的历史版本，实现读取的时候不加锁</li>
+</ol>
+</li>
+<li><p>一致性锁定读</p>
+<ol>
+<li>显示加S/X锁</li>
+</ol>
+</li>
+<li><p>自增长</p>
+<ol>
+<li><p>表锁自增</p>
+</li>
+<li><p>互斥量自增</p>
+</li>
+</ol>
+</li>
+<li><p>外键</p>
+<ol>
+<li>回源表查询的时候，显示使用S锁</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>锁算法</p>
+<ol>
+<li><p>Record Lock</p>
+<ol>
+<li>单行记录锁</li>
+</ol>
+</li>
+<li><p>Gap Lock</p>
+<ol>
+<li>范围锁</li>
+</ol>
+</li>
+<li><p>Next-Key Lock</p>
+<ol>
+<li><p>单行+范围锁</p>
+</li>
+<li><p>对于唯一属性的锁，会降级成为Record Lock</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>锁存在的问题：锁用来实现事务隔离，使得事务可以并发，但仍然存在一些问题</p>
+<ol>
+<li><p>脏读：在一个事务中读到了别的事务未提交的数据</p>
+<ol>
+<li>MVCC 可以解决</li>
+</ol>
+</li>
+<li><p>不可重复读（幻读）：在一个事务中，读到了别的事务提交的数据</p>
+<ol>
+<li>Next-Key Lock可以通过范围的锁定解决幻读</li>
+</ol>
+</li>
+<li><p>丢失更新：两个事务的select 跟 update 交替执行</p>
+<ol>
+<li>在select的时候加X锁可以解决</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>死锁</p>
+<ol>
+<li><p>检测</p>
+<ol>
+<li><p>waits-for graph：</p>
+<ol>
+<li><p>图节点:事务定义</p>
+</li>
+<li><p>节点的边：节点A指向节点B，A依赖B的锁释放</p>
+</li>
+<li><p>存在回路则死锁</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;!-- --&gt;</div></pre></td></tr></table></figure>
+<ol>
+<li><p>事务的实现</p>
+<ol>
+<li><p>手段：write-ahead log+LSN：在事务提交之前先写undo log redo log</p>
+<ol>
+<li><p>redo log：记录每一个页面的改动</p>
+</li>
+<li><p>undo log：insert/update log 记录插入的数据，或者更新的字段跟字段值</p>
+</li>
+</ol>
+</li>
+<li><p>redo log 跟 binlog</p>
+<ol>
+<li><p>redo log在事务提交的过程中写的，binlog在事务完成之后写</p>
+</li>
+<li><p>redo log 针对的是数据页的改动记录，binlog是用于实现主从同步</p>
+</li>
+<li><p>redo log是引擎层面的实现，binlog是mysql服务层面的实现</p>
+</li>
+<li><p>redo log是幂等的，binlog不能保证幂等</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
 <blockquote>
-<p>while（conditon）{</p>
-<p>await();</p>
-<p>}</p>
+<p><strong>联想：</strong></p>
+<p><strong>对于大部分的异常，mysql不会回滚，死锁异常则会回滚</strong></p>
+<p><strong>问题</strong></p>
+<p><strong>mysql的线程模型？</strong></p>
 </blockquote>
-<p>}</p>
-<p>volatile 变量线程修改可见，避免指令重排</p>
-<p>结合AtomicIntegerFiledUpdater ，实现volatile变量的并发更新问题</p>
 
       
     </div>
@@ -468,8 +569,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/10/07/Mockito单元测试常见套路/" rel="next" title="Mockito单元测试">
-                <i class="fa fa-chevron-left"></i> Mockito单元测试
+              <a href="/2020/03/08/Redis设计与实现读书笔记-2020-03-08/" rel="next" title="Redis设计与实现读书笔记_2020.03.08">
+                <i class="fa fa-chevron-left"></i> Redis设计与实现读书笔记_2020.03.08
               </a>
             
           </div>
@@ -478,8 +579,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/02/18/深入理解java虚拟机读书笔记-2020-02-18/" rel="prev" title="深入理解java虚拟机读书笔记_2020.02.18">
-                深入理解java虚拟机读书笔记_2020.02.18 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/03/16/RocketMQ实战与原理解析读书笔记-2020-03-16/" rel="prev" title="RocketMQ实战与原理解析读书笔记_2020.03.16">
+                RocketMQ实战与原理解析读书笔记_2020.03.16 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>

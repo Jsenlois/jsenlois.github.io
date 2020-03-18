@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta name="description" content="阅读心得 LEARNINGS 第一部分： 主要内容：  数据结构">
 <meta name="keywords" content="读书笔记">
 <meta property="og:type" content="article">
-<meta property="og:title" content="netty权威指南读书笔记_2020.01.25">
-<meta property="og:url" content="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/index.html">
+<meta property="og:title" content="Redis设计与实现读书笔记_2020.03.08">
+<meta property="og:url" content="http://yoursite.com/2020/03/08/Redis设计与实现读书笔记-2020-03-08/index.html">
 <meta property="og:site_name" content="Jsenlois">
-<meta property="og:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta property="og:description" content="阅读心得 LEARNINGS 第一部分： 主要内容：  数据结构">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-03-18T10:41:18.026Z">
+<meta property="og:updated_time" content="2020-03-18T11:01:18.558Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="netty权威指南读书笔记_2020.01.25">
-<meta name="twitter:description" content="第一章：linux io 模型 轮训：阻塞，非阻塞 回调：I/O多路复用，信号，异步 多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了selec">
+<meta name="twitter:title" content="Redis设计与实现读书笔记_2020.03.08">
+<meta name="twitter:description" content="阅读心得 LEARNINGS 第一部分： 主要内容：  数据结构">
 
 
 
@@ -120,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/03/08/Redis设计与实现读书笔记-2020-03-08/"/>
 
 
 
 
 
-  <title>netty权威指南读书笔记_2020.01.25 | Jsenlois</title>
+  <title>Redis设计与实现读书笔记_2020.03.08 | Jsenlois</title>
   
 
 
@@ -263,7 +263,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/25/netty权威指南读书笔记-2020-01-25/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/08/Redis设计与实现读书笔记-2020-03-08/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Luo Yuzhi">
@@ -280,7 +280,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">netty权威指南读书笔记_2020.01.25</h1>
+          <h1 class="post-title" itemprop="name headline">Redis设计与实现读书笔记_2020.03.08</h1>
         
 
         <div class="post-meta">
@@ -292,8 +292,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-25T18:25:42+08:00">
-                2020-01-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-08T18:26:44+08:00">
+                2020-03-08
               </time>
             
 
@@ -352,92 +352,228 @@
       
 
       
-        <p>第一章：linux io 模型</p>
-<p>轮训：阻塞，非阻塞</p>
-<p>回调：I/O多路复用，信号，异步</p>
-<p>多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了select，fd大小不受限制，在socket层回调，只有活跃socket才会回调，无需遍历，使用内存映射，减少内存复制，epoll的api也更简洁<br><a id="more"></a><br>第二章：BIO / NIO / AIO</p>
-<p>BIO：同步阻塞IO，主要使用 ServerSocket Socket 对象，通过Input/OutputStream进行读写，每一个Client的请求，都相应的要在服务端创建一个线程来处理请求，可以直接压垮服务器</p>
-<p>改进BIO：把请求封装，放到任务队列，使用线程池处理任务队列，由于同步阻塞IO的原因如写快读慢，就可能导致线程处理过慢，任务队列累计，最终拒绝服务</p>
-<p>NIO：异步非阻塞IO，有阻塞/非阻塞模式，java 1.4使用的还是select模型，改进后使用了epoll，一个线程就可以处理多路复用的轮训就可以实现高并发的客户端接入，如果channel的活跃数量上升，epoll也会退化成select。主要使用ServerSocketChannel SocketChannel Selector对象，通过Channel加缓存Buffer进行读写，每一个Client都是多路复用器上的一个Channel，通过轮训多路复用器上的活跃channel，判断事件类型，并进行对应的处理，由于缓存的读写都是非阻塞的，所以存在读写半包的情况，NIO只是相对于BIO是异步的。</p>
-<p>AIO：真正的异步IO，主要使用AsynchronousSererverSocketChannel，AsynchronousSocketChannel 对象，通过Channel+Buffer异步读写数据</p>
-<p>第三章：Netty NIO 实现一个时间服务器</p>
-<p>NioEventLoopGroup 线程组，包含了一组NIO线程</p>
-<p>Bootstrap 辅助启动类 bind方法，connect方法</p>
-<p>ChannelInitializer</p>
-<p>ChannelHandlerAdapter 网络事件的读写操作</p>
-<p>Unpooled</p>
-<p>ByteBuf</p>
-<p>ChannelHandlerContext</p>
-<p>第四章：拆包/粘包的netty解决方案</p>
-<p>拆包/粘包的产生：应用层数据大于缓冲区的大小，TCP协议的读写滑动窗口会动态变化，TCP本身有个MSS的限制会导致TCP层的数据报拆分，以太网层有MTU限制会导致数据报拆分，</p>
-<p>解决方案：定长分割，分隔符分割，协议分割</p>
-<p>第五章：字符分割器，定长分割器的使用</p>
-<p>ServerBootStrap，BootStrap</p>
-<p>childHandler，handler</p>
-<p>ByteBuf同一个对象发多次的情况，要重置读写位置</p>
-<p>第六章：编解码</p>
-<p>java序列化：java内部的序列化协议，无法跨语言，编码性能低，编码之后的码流也太大</p>
-<p>编解码框架：</p>
-<p>Google Protobuf 机构化存储，高效，跨语言，跨平台，扩展性，官方支持java</p>
-<p>Facebook Thrift 解决大数据量的传输通信，跨语言调用</p>
-<p>JBoss Marshalling JBoss内部使用，应用范围有限</p>
-<p>第七章：MessagePack</p>
-<p>高效的二进制序列化框架，码流小，跨语言，api简单，Message注解</p>
-<p>解码channel：MessageToMessageDecoder</p>
-<p>编码channel：MessageToByteEncoder</p>
-<p>数据报定长分割器：</p>
-<p>LengthFieldPrepender：使用n个字节表示消息体长度</p>
-<p>LengthFieldBasedFrameDecoder：</p>
-<p>第八/九章</p>
-<p>Google Protobuf ，JBoss Marshalling</p>
-<p>第十章：Http协议开发（实现一个十分轻量级的服务端，跟Tomcat相比）</p>
-<p>实现Http协议的文件服务器：</p>
-<p>HttpRequestDecoder</p>
-<p>HttpObjectAggregator 将http request/response 聚合成 => FullHttpRequest,FullHttpResponse</p>
-<p>HttpResponseEncoder</p>
-<p>ChunkWriteHandler 支持异步发送大的码流</p>
-<p>SimpleChannelInboundHandler</p>
-<p>实现Http协议+json的协议栈：</p>
-<p>客户端：Order对象转json的encoder，json转Order对象的decoder</p>
-<p>服务端：json转Order的decoder，Order转json的encoder</p>
-<p>第十一章：websocket开发</p>
-<p>http的缺点：半双工，协议复杂，长轮询容易受攻击</p>
-<p>websocket：全双工；对代理，防火墙，路由器透明；协议简单（没有cookie，头部信息，身份验证）；没有安全开销；ping/pong保活；实时推送，无需轮询</p>
-<p>流程：client先使用http协议发起一次协议升级请求，Upgrade：websocket，server回复协议升级，即握手成功，所在netty里面需要判断消息类型（http请求消息，还是websocket的消息）,js好像没有发送ping的api，可以在server发送ping，接收client的pong</p>
-<p>核心类：</p>
-<p>WebSocketFrame:websocket 通信的抽象消息体（有关闭帧/文本/二进制/ping/pong消息等实现）</p>
-<p>WebSocketServerHandshakerFactory 构建协议升级请求的response，并动态加入WebSocketEncoder，WebSocketDecoder</p>
-<p>第十二章：私有协议开发</p>
-<p>定义消息结构，开发编解码器，开发消息处理器，处理自己关心的数据，然后放行数据，组合成client/server</p>
-<p>LengthFieldBasedFrameDecoder：定长分割器，要除去本身代表长度的字节长度，</p>
-<p>例如：|code（4B）|lenght（4B）|1B|2B|3B|4B| 放到ByteBuf之后readableBytes是18，除去code和length之后的协议长度是10</p>
-<p>MesagePack的限制是必须要使用Message注解，对于复杂对象+历史遗留原因，可能会出现某些对象无法加上该注解</p>
-<p>fireChannelRead，fireXXX channel链放行</p>
-<p>源码解读：</p>
-<p>ByteBuf：缓冲区</p>
-<p>堆外内存：I/O通信的时候少一次用户进程到内核的复制，高性能，但是内存回收不方便</p>
-<p>堆内存：用于I/O通信的时候，需要复制到内核的缓冲区，影响性能，但是内存管理方便</p>
-<p>池化内存区：对于高并发的情况，频繁申请/释放大的内存块影响性能，所以有了池化内存区，可以复用内存区，预先申请一大块的内存区域，分割成若干chunk，chuank再分为若干page，page组织方式是二叉树</p>
-<p>非池化内存：每次都重新开辟一块内存</p>
-<p>Channel/Unsafe</p>
-<p>channel负责链路的建立/关闭，读写，具体实现由Unsafe实现，可以获取eventloop</p>
-<p>ChannelPipeline/ChannelHandler</p>
-<p>ChannelPipeline用链表的形式组织ChannelHandler，支持动态增删改查</p>
-<p>EventLoop</p>
-<p>处理I/O任务跟非IO任务</p>
-<p>第二十章：netty 架构：</p>
-<p>高性能：异步非阻塞IO，堆外直接内存的使用，内存池的使用，环形缓冲区，reactor模型，正确的处理并发</p>
-<p>可靠：读写空闲时间的心跳检测</p>
-<p>第二十一章：多线程在netty中的使用</p>
-<p>synchronized() {</p>
+        <p>阅读心得 LEARNINGS</p>
+<p>第一部分：</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>数据结构<a id="more"></a></p>
+<ol>
+<li><p>字符串（int len,int free,char[] buf）</p>
+<ol>
+<li><p>对c字符串的封装，’\0’不计入lengh属性</p>
+</li>
+<li><p>有length数据，O(1)复杂度查询length</p>
+</li>
+<li><p>有字符串空间检测，自动扩容，防止越界覆盖</p>
+</li>
+<li><p>通过free字段实现空间预分配，而不是每次都要重新分配内存空间，并提供api在需要的时候释放多余的空间</p>
+</li>
+<li><p>二进制安全，可以兼容’\0’字符</p>
+</li>
+<li><p>兼容部分C字符串函数</p>
+</li>
+</ol>
+</li>
+<li><p>链表</p>
+<ol>
+<li><p>双向</p>
+</li>
+<li><p>无环</p>
+</li>
+<li><p>有表头，表尾指针</p>
+</li>
+<li><p>有length属性</p>
+</li>
+<li><p>多态的节点值</p>
+</li>
+</ol>
+</li>
+<li><p>字典</p>
+<ol>
+<li><p>结构（1，2用于多态的扩展）</p>
+<ol>
+<li><p>type</p>
+</li>
+<li><p>privadata</p>
+</li>
+<li><p>ht[2]，常规情况下只是用ht[0]，rehash的时候会使用到ht[0]</p>
+<ol>
+<li><p>dictEntry 数组的每一个对象是dictEntry</p>
+<ol>
+<li><p>k,v</p>
+</li>
+<li><p>next ，hash冲突的时候使用next串联</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>rehashindex，rehash的状态标记</p>
+</li>
+</ol>
+</li>
+<li><p>rehash</p>
+<ol>
+<li><p>h[1]的空间分配</p>
+</li>
+<li><p>h[0] --rehash--> h[1]</p>
+</li>
+<li><p>h[1] ----> new Dict</p>
+</li>
+</ol>
+</li>
+<li><p>周期性调度渐进式rehash</p>
+<ol>
+<li><p>h[1]的空间分配</p>
+</li>
+<li><p>设置标记位 rehashIndex = 0</p>
+</li>
+<li><p>判断标记位，如果是在rehash，则对dict的rud时，顺便rehash到h[1]</p>
+</li>
+<li><p>当全部rehash完成之后，标记位重新置为-1</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>跳跃表</p>
+<ol>
+<li>给有序链表加索引，提升检索速度</li>
+</ol>
+</li>
+<li><p>整数集合</p>
+<ol>
+<li>通过encoding字段表面当前存储的整数类型(int_16,int_32,int_64)，尽可能的节约内存</li>
+</ol>
+</li>
+<li><p>压缩列表</p>
+</li>
+<li><p>对象</p>
+<ol>
+<li><p>字符串对象</p>
+</li>
+<li><p>哈希对象</p>
+</li>
+<li><p>列表对象</p>
+</li>
+<li><p>集合对象</p>
+</li>
+<li><p>有序集合对象</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>redisServer</p>
+<ol>
+<li><p>redisDB</p>
+<ol>
+<li><p>dict dict 存放 kv 空间</p>
+<ol>
+<li>SET / GET 等K-V指令操作的是该空间</li>
+</ol>
+</li>
+<li><p>dict expires 存放带有过期时间的建</p>
+<ol>
+<li><p>过期删除策略</p>
+<ol>
+<li><p>定时器，对CPU不友好</p>
+</li>
+<li><p>惰性删除，获取的时候判断过期，对内存不友好</p>
+</li>
+<li><p>定期删除</p>
+</li>
+</ol>
+</li>
+<li><p>redis采用惰性删除解惑定期删除</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
 <blockquote>
-<p>while（conditon）{</p>
-<p>await();</p>
-<p>}</p>
+<p><strong>联想：</strong></p>
+<p><strong>问题：</strong></p>
 </blockquote>
-<p>}</p>
-<p>volatile 变量线程修改可见，避免指令重排</p>
-<p>结合AtomicIntegerFiledUpdater ，实现volatile变量的并发更新问题</p>
+<p>第二部分：</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>多机的主从复制实现</p>
+<ol>
+<li><p>旧版的集群复制</p>
+<ol>
+<li><p>同步</p>
+<ol>
+<li><p>客户端发送sync指令给服务端</p>
+</li>
+<li><p>服务端生产rdb文件给客户端，并将后续的命令写入缓冲区</p>
+</li>
+<li><p>rdb传输完成之后，发送缓冲命令</p>
+</li>
+</ol>
+</li>
+<li><p>命令传播</p>
+</li>
+<li><p>缺点：sync同步太重</p>
+</li>
+</ol>
+</li>
+<li><p>新版复制（引入部分重同步，断线之后，再次像服务器发起同步请求的时候，进入部分重同步模式）</p>
+<ol>
+<li><p>部分重同步（断线恢复的情况）</p>
+<ol>
+<li><p>主服务器偏移量A，服务器ID</p>
+</li>
+<li><p>从服务器偏移量B，主服务器ID</p>
+</li>
+<li><p>主服务器维护偏移量跟1M缓冲区</p>
+</li>
+<li><p>从服务器提供偏移量B+主服务器ID，如果朱服务器ID变更，则进行完整重同步，若服务器id相同，看看在缓冲区中是否能拿到，可以则执行部分重同步，否则使用完整同步</p>
+</li>
+</ol>
+</li>
+<li><p>命令丢失检查</p>
+<ol>
+<li><p>主服务器写向从服务器</p>
+</li>
+<li><p>从服务器返回ACK偏移量</p>
+</li>
+<li><p>若偏移量不等于主服务器的偏移量，则主服务器主动重新发送缓冲区中的数据</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Sentinel系统，redis高可用的保证</p>
+<ol>
+<li><p>sentinel模式启动redis服务器</p>
+</li>
+<li><p>sentinel连接主服务器，并自动发现所有的从服务器和其他sentinel</p>
+</li>
+<li><p>当达到一定数量的sentinel都检测到主服务器下线，则客观认为该服务器下线了</p>
+</li>
+<li><p>选举领头sentinel</p>
+</li>
+<li><p>sentinel向所有的检测sential发出选举请求，直至选出领头sentinel</p>
+</li>
+<li><p>领头sentinel对主服务器下线</p>
+</li>
+<li><p>从从服务器里筛选出新的主服务器</p>
+</li>
+<li><p>同步所有从服务器的slave of</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题：</strong></p>
+</blockquote>
 
       
     </div>
@@ -468,8 +604,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/10/07/Mockito单元测试常见套路/" rel="next" title="Mockito单元测试">
-                <i class="fa fa-chevron-left"></i> Mockito单元测试
+              <a href="/2020/02/18/深入理解java虚拟机读书笔记-2020-02-18/" rel="next" title="深入理解java虚拟机读书笔记_2020.02.18">
+                <i class="fa fa-chevron-left"></i> 深入理解java虚拟机读书笔记_2020.02.18
               </a>
             
           </div>
@@ -478,8 +614,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/02/18/深入理解java虚拟机读书笔记-2020-02-18/" rel="prev" title="深入理解java虚拟机读书笔记_2020.02.18">
-                深入理解java虚拟机读书笔记_2020.02.18 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/03/13/InnoDB存储引擎读书笔记-2020-03-13/" rel="prev" title="InnoDB存储引擎读书笔记_2020.03.13">
+                InnoDB存储引擎读书笔记_2020.03.13 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
