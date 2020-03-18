@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favo.ico?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favo.ico?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="测试," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Mokcito单元测试 reference : mockito doc  单元测试why？ 发现问题的成本最低 调教你的编程习惯 保证代码质量">
+<meta name="keywords" content="测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mockito单元测试">
+<meta property="og:url" content="http://yoursite.com/2017/10/07/Mockito单元测试常见套路/index.html">
+<meta property="og:site_name" content="Jsenlois">
+<meta property="og:description" content="Mokcito单元测试 reference : mockito doc  单元测试why？ 发现问题的成本最低 调教你的编程习惯 保证代码质量">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-03-18T06:53:06.167Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mockito单元测试">
+<meta name="twitter:description" content="Mokcito单元测试 reference : mockito doc  单元测试why？ 发现问题的成本最低 调教你的编程习惯 保证代码质量">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/10/07/Mockito单元测试常见套路/"/>
+
+
+
+
+
+  <title>Mockito单元测试 | Jsenlois</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Jsenlois</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Amazing world</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/07/Mockito单元测试常见套路/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Luo Yuzhi">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jsenlois">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Mockito单元测试</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-07T13:14:07+08:00">
+                2017-10-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Mokcito单元测试"><a href="#Mokcito单元测试" class="headerlink" title="Mokcito单元测试"></a>Mokcito单元测试</h2><blockquote>
+<p>reference : <a href="http://static.javadoc.io/org.mockito/mockito-core/2.10.0/org/mockito/Mockito.html" target="_blank" rel="external">mockito doc</a></p>
+</blockquote>
+<h3 id="单元测试why？"><a href="#单元测试why？" class="headerlink" title="单元测试why？"></a>单元测试why？</h3><ul>
+<li>发现问题的成本最低</li>
+<li>调教你的编程习惯</li>
+<li>保证代码质量<a id="more"></a>
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3></li>
+<li>语法简洁，使用简单，易上手</li>
+<li>比较有测试的思维（无法随意Mock）<h3 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h3></li>
+<li>不能mock静态方法</li>
+<li>不能mock构造方法</li>
+<li>不能mock equals()，hashCode()</li>
+<li>不能mock final类 ， final方法</li>
+<li>不能mock私有方法，可以把私有，变成protected<br>，若你需要mock私有，可能是你的程序还不够OO (Object Oriented)<h3 id="常规用法"><a href="#常规用法" class="headerlink" title="常规用法"></a>常规用法</h3><h4 id="大体蓝图"><a href="#大体蓝图" class="headerlink" title="大体蓝图"></a>大体蓝图</h4>当你需要桩（取代某个依赖）的时候，你可以用两种方式来模拟桩，spy &amp; mock</li>
+<li><p>spy</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">MockedObject object = new MockedObject();  </div><div class="line">MockedObject spiedObject = Mockito.spy(object);</div></pre></td></tr></table></figure>
+</li>
+<li><p>mock  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">MockedObject mockedObject = Mockito.mock(MockedObject.class);</div></pre></td></tr></table></figure>
+</li>
+<li><p>两者的区别：    </p>
+<p>当你使用spy来获取到一个桩的时候，你在执行某个方法的时候，spy的对象都会==真正的去执行方法内的代码==。  </p>
+<p>而当桩是通过mock获取到的话，mock的对象的所有属性都为空，所有方法的返回值都是返回类型的默认值（如对象类型的默认值是null），==方法里的代码不会执行==。 </p>
+<p>其实这点区别是可以从代码层面上看出来的，spy的时候先拿到了一个对象，然后对对象进行spy，而mock的时候使用的则是字节码。  </p>
+</li>
+<li>两者之间的效果也可以互相转化<br>  spy类型的可以通过 <figure class="highlight plain"><figcaption><span>``` ，使得代码不被执行，mock类型可以通过 ``` doRealCallMethod() ``` ,使得代码被执行，所以spy和mock的界限其实并不清晰</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">- 代码示例  </div><div class="line">  被mock和spy的类</div></pre></td></tr></table></figure></li>
+</ul>
+<p>class TestMock{</p>
+<pre><code>public void t1 (String ss) {
+    System.out.println(&quot;hh&quot;+ss);
+}
+
+public String t2 (String ss) {
+    return &quot;hh&quot;+ss;
+}
+
+public Boolean t3() {
+    return true;
+}
+
+public String t4(MockParam mockParam) {
+
+    return mockParam.name;
+}
+
+public String t5(MockParam mockParam , String s) {
+    return s;
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">参数类（在上面的类中的某些方法的参数）</div></pre></td></tr></table></figure></p>
+<p>class MockParam{</p>
+<pre><code>String name;
+
+int age;
+
+public MockParam(String name) {
+    this.name = name;
+}
+
+@Override
+public boolean equals(Object obj) {
+    obj = (MockParam)obj;
+    if(this == obj || this.name.equals(((MockParam) obj).name)) {
+        return true;
+    }
+    return false;
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">mock样例  </div><div class="line">所有方法的返回都是方法的默认类型，方法内的代码不会被执行</div></pre></td></tr></table></figure></p>
+<p>public void test2() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;a&quot;);
+
+System.out.println(mock.t2(&quot;b&quot;));
+
+System.out.println(mock.t3());
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;666&quot;);
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;777&quot;);
+
+System.out.println(mock.t2(&quot;c&quot;));
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">spy样例  </div><div class="line">所有方法的代码都会被执行，并正常返回</div></pre></td></tr></table></figure>
+<p>public void test3() {</p>
+<pre><code>TestMock mock1 = new TestMock();
+
+TestMock spyTest = spy(mock1);
+
+spyTest.t1(&quot;c&quot;);
+
+System.out.println(spyTest.t2(&quot;d&quot;));
+
+System.out.println(spyTest.t3());
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">  </div><div class="line">#### 参数匹配 </div><div class="line">- 通常情况下，参数匹配使用的equals方法</div></pre></td></tr></table></figure></p>
+<p> @Test<br>public void test4() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;777&quot;);
+
+System.out.println(mock.t2(&quot;d&quot;));//d,c equals = false
+</code></pre><p>}</p>
+<p>@Test<br>public void test5() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+when(mock.t4(mockParam)).thenReturn(&quot;555&quot;);
+
+System.out.println(mock.t4(mockParam));//equals true
+
+System.out.println(mock.t4(new MockParam(&quot;555&quot;)));//equals false 可以重写equals方法，使之为ture
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 内置参数匹配(常用)</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test6() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+when(mock.t4(any())).thenReturn(&quot;555&quot;);
+
+System.out.println(mock.t4(mockParam));//true
+
+System.out.println(mock.t4(new MockParam(&quot;555&quot;)));//true
+
+when(mock.t2(anyString())).thenReturn(&quot;dddd&quot;);
+
+System.out.println(mock.t2(&quot;aaa&quot;));//return dddd
+
+System.out.println(mock.t2(&quot;bbb&quot;));//return dddd
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 注意</div><div class="line">⚠ :如果有一个参数使用了参数匹配器，那所有参数都得使用参数匹配器</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test7() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+//when(mock.t5(any() , &quot;6666&quot;)).thenReturn(&quot;666&quot;); //no
+when(mock.t5(any() , anyString())).thenReturn(&quot;666&quot;);  //yes
+
+System.out.println(mock.t5(mockParam , &quot;ddd&quot;));
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 自定义参数匹配器，先实现参数匹配器的接口，根据需要在matches里返回true or false</div></pre></td></tr></table></figure></p>
+<p>//定义参数匹配器<br>class MockParamArgMatcher implements ArgumentMatcher<mockparam> {</mockparam></p>
+<pre><code>@Override
+public boolean matches(MockParam mockParam) {
+
+    if(mockParam.name.equals(&quot;666&quot;)) {
+        return true;
+    }
+
+    return false;
+}
+</code></pre><p>}<br>//使用匹配器<br>@Test<br>public void test9() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;666&quot;);
+
+when(mock.t4(argThat(new MockParamArgMatcher()))).thenReturn(&quot;666666666&quot;);
+
+System.out.println(mock.t4(mockParam));
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 附加参数匹配器(参数验证)</div></pre></td></tr></table></figure>
+<p>@Test<br>public void test8() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+//在此处可以做入参的逻辑校验
+//when(mock.t5(any() , eq(&quot;6666&quot;))).thenReturn(&quot;666&quot;);  //yes
+
+when(mock.t5(any() , not( and( eq(&quot;6666&quot;),eq(&quot;444&quot;))) ) ).thenReturn(&quot;666&quot;);  //yes
+
+System.out.println(mock.t5(mockParam , &quot;6667&quot;));
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 官网推荐的参数验证方式（很好用，使用这个差不多就可以取代断点调试了）</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test10() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;666&quot;);
+
+MockParam mockParam1 = new MockParam(&quot;777&quot;);
+
+when(mock.t4(any())).thenReturn(&quot;666666666&quot;);
+
+System.out.println(mock.t4(mockParam1));
+
+//参数捕捉器，可以捕捉该类型的入參
+ArgumentCaptor&lt;MockParam&gt; captor = ArgumentCaptor.forClass(MockParam.class);
+
+//这条语句一定要执行
+verify(mock).t4(captor.capture());
+
+System.out.println(captor.getAllValues().size());
+
+assertEquals(&quot;666&quot; , captor.getValue().name);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">#### 其他常规套路</div><div class="line">- 验证调用方法的次数</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test11() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;1&quot;);
+mock.t1(&quot;2&quot;);
+mock.t1(&quot;3&quot;);
+mock.t1(&quot;4&quot;);
+mock.t1(&quot;5&quot;);
+mock.t1(&quot;6&quot;);
+mock.t1(&quot;7&quot;);
+mock.t1(&quot;8&quot;);
+
+verify(mock,times(8)).t1(anyString());
+verify(mock,atLeast(2)).t1(anyString());
+verify(mock,atMost(9)).t1(anyString());
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- 验证方法执行的顺序</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test14() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;&quot;);
+mock.t2(&quot;&quot;);
+
+InOrder inOrder = Mockito.inOrder(mock);
+
+inOrder.verify(mock).t1(&quot;&quot;);
+inOrder.verify(mock).t2(&quot;&quot;);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">- doReturn</div></pre></td></tr></table></figure></p>
+<p> @Test<br>public void test16() {</p>
+<pre><code>List list = new LinkedList();
+List spy = spy(list);
+//spy 模式会执行代码，但目前list为空
+//when(spy.get(0)).thenReturn(&quot;foo&quot;);   //IndexOutOfBoundsException
+//相当于mock
+doReturn(&quot;foo&quot;).when(spy).get(0);
+</code></pre><p>}</p>
+<p>```</p>
+<hr>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/测试/" rel="tag"># 测试</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/04/HelloWorld/" rel="next" title="国庆随笔">
+                <i class="fa fa-chevron-left"></i> 国庆随笔
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpeg"
+                alt="Luo Yuzhi" />
+            
+              <p class="site-author-name" itemprop="name">Luo Yuzhi</p>
+              <p class="site-description motion-element" itemprop="description">未来很迷茫，当下更要坚定!!!</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">文章</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Mokcito单元测试"><span class="nav-number">1.</span> <span class="nav-text">Mokcito单元测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单元测试why？"><span class="nav-number">1.1.</span> <span class="nav-text">单元测试why？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优点"><span class="nav-number">1.2.</span> <span class="nav-text">优点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限制"><span class="nav-number">1.3.</span> <span class="nav-text">限制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常规用法"><span class="nav-number">1.4.</span> <span class="nav-text">常规用法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#大体蓝图"><span class="nav-number">1.4.1.</span> <span class="nav-text">大体蓝图</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Luo Yuzhi</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
