@@ -2,7 +2,7 @@
 <search>
   <entry>
     <title>Java源码的二进制骚操作-HashMap构造函数</title>
-    <url>/2020/03/20/Java%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%AA%9A%E6%93%8D%E4%BD%9C-HashMap%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0/</url>
+    <url>/Java%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%AA%9A%E6%93%8D%E4%BD%9C-HashMap%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0/</url>
     <content><![CDATA[<h2 id="Java-源码的二进制骚操作-HashMap构造函数"><a href="#Java-源码的二进制骚操作-HashMap构造函数" class="headerlink" title="Java 源码的二进制骚操作-HashMap构造函数"></a>Java 源码的二进制骚操作-HashMap构造函数</h2><h4 id="1-问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂"><a href="#1-问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂" class="headerlink" title="1. 问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂"></a>1. 问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂</h4><h4 id="2-目标：为了找到大于等于A的，最小的，2的n次幂"><a href="#2-目标：为了找到大于等于A的，最小的，2的n次幂" class="headerlink" title="2. 目标：为了找到大于等于A的，最小的，2的n次幂"></a>2. 目标：为了找到大于等于A的，最小的，2的n次幂</h4><h4 id="3-思路："><a href="#3-思路：" class="headerlink" title="3. 思路："></a>3. 思路：</h4><a id="more"></a>
 <figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">比如为了找到大于等于10的，最小的，2的n次幂16</div><div class="line">对于一个数A将其转化为一串二进制，如10，16</div><div class="line">10 =&gt; 00000000 00000000 00000000 00001010</div><div class="line">16 =&gt; 00000000 00000000 00000000 00010000</div><div class="line">只需要将A的，最高位为1的，后面的二进制全部变为1，然后在+1就可以了</div><div class="line">如下：</div><div class="line">1、找最高位为1的地方：00000000 00000000 00000000 00001（最高位为1）010</div><div class="line">2、后面的二进制全部变为1</div><div class="line">00000000 00000000 00000000 00001（最高位为1）111</div><div class="line">3、再+1</div><div class="line">00000000 00000000 00000000 00010000</div></pre></td></tr></table></figure>
 <h4 id="4-源码，源码位置：HashMap-tableSizeFor方法"><a href="#4-源码，源码位置：HashMap-tableSizeFor方法" class="headerlink" title="4. 源码，源码位置：HashMap.tableSizeFor方法"></a>4. 源码，源码位置：HashMap.tableSizeFor方法</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">static final int tableSizeFor(int cap) &#123;</div><div class="line">  int n = cap - 1;</div><div class="line">  n |= n &gt;&gt;&gt; 1;</div><div class="line">  n |= n &gt;&gt;&gt; 2;</div><div class="line">  n |= n &gt;&gt;&gt; 4;</div><div class="line">  n |= n &gt;&gt;&gt; 8;</div><div class="line">  n |= n &gt;&gt;&gt; 16;</div><div class="line">  return (n &lt; 0) ? 1 : (n &gt;= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
@@ -17,7 +17,7 @@
   </entry>
   <entry>
     <title>有赞三年简历</title>
-    <url>/2020/03/18/%E6%9C%89%E8%B5%9E%E4%B8%89%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
+    <url>/%E6%9C%89%E8%B5%9E%E4%B8%89%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
     <content><![CDATA[<h2 id="有赞三年——2017-03～2020-03"><a href="#有赞三年——2017-03～2020-03" class="headerlink" title="有赞三年——2017-03～2020-03"></a>有赞三年——2017-03～2020-03</h2><h4 id="Offer"><a href="#Offer" class="headerlink" title="Offer"></a>Offer</h4><p>17年3月份我还在家里刚做毕业设计，想着毕业了该找工作了，在阿里上投了校招，但是感觉流程好长啊，不想等，打开拉勾的时候<a id="more"></a>，刚好看到有赞CTO的演讲，题目大概是为什么你不想错过2017年的有赞，听完这场演讲之后，就开始在网上各种收集资料了解有赞，了解白鸦，了解CTO崔，在百度上碰巧查到了崔的微博，本着拜读大佬微博的心态点进去了看了下，翻了几页，刚好看到了CTO的邮箱，于是给CTO发了封邮件，大概就是想来有赞实习，附上了简历，我还是第一次使用邮件交流，没想到CTO居然回复我了，当时感觉有点小激动的，于是就开始各种面试，经过了三轮技术面试跟hr面试，终于拿到了实习Offer。本来是两轮技术面就过了，但是去现场的时候，可能是因为认错人了，把我拉过去又面了一次。这还是有一次周会聊起这事儿，才知道我的TL都不知道我面试了三轮</p>
 <h4 id="实习工作"><a href="#实习工作" class="headerlink" title="实习工作"></a>实习工作</h4><p>当时自己学的是java，来到有赞发现当时还是一个php单体应用，简单的学了下php语法，当时任务都是有伴（类似导师）安排的，都是简单的包接口，等熟悉了之后，才开始开发一些比较复杂的业务</p>
 <h4 id="正式工作"><a href="#正式工作" class="headerlink" title="正式工作"></a>正式工作</h4><p>转正之后主要参与的是分销，精选，平台运营的业务，还有就是php体系迁移到java+node的体系。<br>当时有几件比较印象深刻的事。<br>来有赞的第一个双11，上线精选平台。从国庆放假回来开始，双11之前必须上线，第一次经历倒排项目，当时跟组里的小伙伴连续加班了25天，终于把项目推上线了。<br>在迁移分销的时候背了个故障。原因是清退分销商的时候要关闭分销商的店铺交易，结果参数传错把供货商的交易给关了，幸好清退是低频操作，当时就是很慌，还要赔钱，后来就开始敬畏线上代码了。</p>
@@ -34,7 +34,7 @@
   </entry>
   <entry>
     <title>Spring揭秘-二刷读书笔记_2020.03.17</title>
-    <url>/2020/03/17/Spring%E6%8F%AD%E7%A7%98%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-%E4%BA%8C%E5%88%B7-2020-03-17/</url>
+    <url>/Spring%E6%8F%AD%E7%A7%98%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-%E4%BA%8C%E5%88%B7-2020-03-17/</url>
     <content><![CDATA[<h2 id="Spring揭秘"><a href="#Spring揭秘" class="headerlink" title="Spring揭秘"></a>Spring揭秘</h2><ol>
 <li><p>Bean 装配的整体流程（BeanFactory）<a id="more"></a></p>
 <ol>
@@ -187,7 +187,7 @@
   </entry>
   <entry>
     <title>RocketMQ实战与原理解析读书笔记_2020.03.16</title>
-    <url>/2020/03/16/RocketMQ%E5%AE%9E%E6%88%98%E4%B8%8E%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-16/</url>
+    <url>/RocketMQ%E5%AE%9E%E6%88%98%E4%B8%8E%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-16/</url>
     <content><![CDATA[<p>书名 BOOK TITLE：RocketMQ实战与原理解析</p>
 <p>第一部分：整体架构</p>
 <p><strong>主要内容：</strong></p>
@@ -403,7 +403,7 @@
   </entry>
   <entry>
     <title>InnoDB存储引擎读书笔记_2020.03.13</title>
-    <url>/2020/03/13/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-13/</url>
+    <url>/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-13/</url>
     <content><![CDATA[<p>第一部分：存储引擎</p>
 <p><strong>主要内容：</strong></p>
 <ol>
@@ -601,7 +601,7 @@
   </entry>
   <entry>
     <title>Redis设计与实现读书笔记_2020.03.08</title>
-    <url>/2020/03/08/Redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-08/</url>
+    <url>/Redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-08/</url>
     <content><![CDATA[<p>阅读心得 LEARNINGS</p>
 <p>第一部分：</p>
 <p><strong>主要内容：</strong></p>
@@ -834,7 +834,7 @@
   </entry>
   <entry>
     <title>深入理解java虚拟机读书笔记_2020.02.18</title>
-    <url>/2020/02/18/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-02-18/</url>
+    <url>/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-02-18/</url>
     <content><![CDATA[<p>第一部分：<strong>java的发展史，jvm的发展史</strong></p>
 <p><strong>主要内容：</strong><a id="more"></a></p>
 <ol>
@@ -1334,7 +1334,7 @@
   </entry>
   <entry>
     <title>netty权威指南读书笔记_2020.01.25</title>
-    <url>/2020/01/25/netty%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-01-25/</url>
+    <url>/netty%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-01-25/</url>
     <content><![CDATA[<p>第一章：linux io 模型</p>
 <p>轮训：阻塞，非阻塞</p>
 <p>回调：I/O多路复用，信号，异步</p>
@@ -1431,7 +1431,7 @@
   </entry>
   <entry>
     <title>Mockito单元测试</title>
-    <url>/2017/10/07/Mockito%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E5%A5%97%E8%B7%AF/</url>
+    <url>/Mockito%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E5%A5%97%E8%B7%AF/</url>
     <content><![CDATA[<h2 id="Mokcito单元测试"><a href="#Mokcito单元测试" class="headerlink" title="Mokcito单元测试"></a>Mokcito单元测试</h2><blockquote>
 <p>reference : <a href="http://static.javadoc.io/org.mockito/mockito-core/2.10.0/org/mockito/Mockito.html" target="_blank" rel="external">mockito doc</a></p>
 </blockquote>
@@ -1672,7 +1672,7 @@ doReturn(&quot;foo&quot;).when(spy).get(0);
   </entry>
   <entry>
     <title>国庆随笔</title>
-    <url>/2017/10/04/HelloWorld/</url>
+    <url>/HelloWorld/</url>
     <content><![CDATA[<p>今年国庆+中秋，终于回家了，以前在学校的时候，国庆七天假一般都待在学校，主要是因为那会儿还有寒暑假，所以国庆的七天并没有多大的吸引力。但现在不一样了，现在就只有一些零零散散的假期了。</p>
 <p>转眼出来工作半年了，也毕业了三个月了，实习三个月，试用三个月，我也经常反思一些东西，但很少写下来，今天接着这个blog的东风，随便写写。<br><a id="more"></a>  </p>
 <h4 id="关于blog"><a href="#关于blog" class="headerlink" title="关于blog"></a>关于blog</h4><p>其实很早之前就想玩玩这个git pages，但总是浅尝辄止，主要是Vbox上的ubuntu确实有点恶心(没有装那个增强功能，装上了就挺好的)，而我又不想在工作本上搭这些环境，昨天花了一个下午用hexo把git pages搭了起来，感觉搭这个并不难，难的是找到一个酷一点的模板毕竟【看脸】【尴尬】。</p>
@@ -1692,7 +1692,7 @@ doReturn(&quot;foo&quot;).when(spy).get(0);
   </entry>
   <entry>
     <title>大学四年简历</title>
-    <url>/2017/03/18/%E5%A4%A7%E5%AD%A6%E5%9B%9B%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
+    <url>/%E5%A4%A7%E5%AD%A6%E5%9B%9B%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
     <content><![CDATA[<p><strong>教育背景</strong> 时间：2013.09-2017.07 南昌工程学院 软件工程（本科） 中共党员 班级学习委员</p>
 <p>主要课程：数据结构，操作系统，组成原理，网络原理，编译原理，离散数学，线代，软件工程，编程课等</p>
 <p><strong>奖项证书</strong></p>
