@@ -1,0 +1,1756 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Java源码的二进制骚操作-HashMap构造函数</title>
+    <url>/2020/03/20/Java%E6%BA%90%E7%A0%81%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E9%AA%9A%E6%93%8D%E4%BD%9C-HashMap%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0/</url>
+    <content><![CDATA[<h2 id="Java-源码的二进制骚操作-HashMap构造函数"><a href="#Java-源码的二进制骚操作-HashMap构造函数" class="headerlink" title="Java 源码的二进制骚操作-HashMap构造函数"></a>Java 源码的二进制骚操作-HashMap构造函数</h2><h4 id="1-问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂"><a href="#1-问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂" class="headerlink" title="1. 问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂"></a>1. 问题：指定capacity构造hashmap，为什么经过一连串的移位跟或运算就能得到2的n次幂</h4><h4 id="2-目标：为了找到大于等于A的，最小的，2的n次幂"><a href="#2-目标：为了找到大于等于A的，最小的，2的n次幂" class="headerlink" title="2. 目标：为了找到大于等于A的，最小的，2的n次幂"></a>2. 目标：为了找到大于等于A的，最小的，2的n次幂</h4><h4 id="3-思路："><a href="#3-思路：" class="headerlink" title="3. 思路："></a>3. 思路：</h4><a id="more"></a>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">比如为了找到大于等于10的，最小的，2的n次幂16</div><div class="line">对于一个数A将其转化为一串二进制，如10，16</div><div class="line">10 =&gt; 00000000 00000000 00000000 00001010</div><div class="line">16 =&gt; 00000000 00000000 00000000 00010000</div><div class="line">只需要将A的，最高位为1的，后面的二进制全部变为1，然后在+1就可以了</div><div class="line">如下：</div><div class="line">1、找最高位为1的地方：00000000 00000000 00000000 00001（最高位为1）010</div><div class="line">2、后面的二进制全部变为1</div><div class="line">00000000 00000000 00000000 00001（最高位为1）111</div><div class="line">3、再+1</div><div class="line">00000000 00000000 00000000 00010000</div></pre></td></tr></table></figure>
+<h4 id="4-源码，源码位置：HashMap-tableSizeFor方法"><a href="#4-源码，源码位置：HashMap-tableSizeFor方法" class="headerlink" title="4. 源码，源码位置：HashMap.tableSizeFor方法"></a>4. 源码，源码位置：HashMap.tableSizeFor方法</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">static final int tableSizeFor(int cap) &#123;</div><div class="line">  int n = cap - 1;</div><div class="line">  n |= n &gt;&gt;&gt; 1;</div><div class="line">  n |= n &gt;&gt;&gt; 2;</div><div class="line">  n |= n &gt;&gt;&gt; 4;</div><div class="line">  n |= n &gt;&gt;&gt; 8;</div><div class="line">  n |= n &gt;&gt;&gt; 16;</div><div class="line">  return (n &lt; 0) ? 1 : (n &gt;= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="5-分析"><a href="#5-分析" class="headerlink" title="5. 分析"></a>5. 分析</h4><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">源码里面，一上来就减1，然后各种位移运算，接着就返回了。。。</div><div class="line">无妨，待我细细讲来</div><div class="line">这里假设cap = 10</div><div class="line"></div><div class="line">/**</div><div class="line">首先为什么要减1，因为目标是找到大于等于A的，最小的n次幂</div><div class="line">如果不减1，而刚好cap参数就是2的n次幂的时候，</div><div class="line">那就要引入if/else分支来判断，直接返回</div><div class="line"></div><div class="line">所以-1是为了后面的位移运算能兼容cap参数直接等于2的n次幂，</div><div class="line">和非2的n次幂，现在不理解没事，看完后面的再回来看就能理解了，</div><div class="line">换个cap参数试一下就知道</div><div class="line">**/</div><div class="line">1、int n = cap - 1;</div><div class="line"></div><div class="line">/**</div><div class="line">cap = 10，n = cap - 1 = 9;</div><div class="line">n的二进制为 00000000 00000000 00000000 00001（最高位为1）001</div><div class="line"></div><div class="line">第一次运算无符号右移一位，最高为为1的位像右移动了1位</div><div class="line">二进制为 00000000 00000000 00000000 00000100</div><div class="line"></div><div class="line">位移之后与原来的数做或运算，好，为什么是或运算</div><div class="line">因为1的所有或运算都等于1</div><div class="line"></div><div class="line">在最高位已经右移了一位的情况下，做或运算一定能得到，最高位连续两位为1</div><div class="line">如下：</div><div class="line">00000000 00000000 00000000 00001001：原来的数</div><div class="line">|：或操作</div><div class="line">00000000 00000000 00000000 00000100：右移错开了一位</div><div class="line">00000000 00000000 00000000 000011（最高位两位连续为1）00：或的结果</div><div class="line">**/</div><div class="line">2、  n |= n &gt;&gt;&gt; 1;</div><div class="line"></div><div class="line">/**</div><div class="line">在有了最高位两位连续为1的情况下，</div><div class="line">再右移两位，做或运算，一定能得到，最高位四位连续为1</div><div class="line">**/</div><div class="line">3、  n |= n &gt;&gt;&gt; 2;</div><div class="line"></div><div class="line">/**</div><div class="line">同理，在有了最高位四位连续为1的情况下，</div><div class="line">再右移四位，做或运算，一定能得到，最高位8位连续为1，</div><div class="line">这里由于cap=10，所以到了这里右移得到的数据全为0，</div><div class="line">与0或操作之后得到的数都等于原来的值，</div><div class="line">可以选个大点的cap值就知道了</div><div class="line">**/</div><div class="line">4、  n |= n &gt;&gt;&gt; 4;</div><div class="line"></div><div class="line">/**</div><div class="line">在有了最高位8位连续为1的情况下，</div><div class="line">再右移8位，做或运算，一定能得到，最高位16位连续为1</div><div class="line">**/</div><div class="line">5、  n |= n &gt;&gt;&gt; 8;</div><div class="line"></div><div class="line">/**</div><div class="line">在有了最高位16位连续为1的情况下，</div><div class="line">再右移16位，做或运算，一定能得到，最高位32位连续为1</div><div class="line">**/</div><div class="line">6、  n |= n &gt;&gt;&gt; 16;</div><div class="line"></div><div class="line">//最后再做一些兼容运算</div><div class="line">7、  return (n &lt; 0) ? 1 : (n &gt;= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;</div></pre></td></tr></table></figure>
+<h4 id="6-位操作是最适合计算机的，但读起来真的是反人类啊"><a href="#6-位操作是最适合计算机的，但读起来真的是反人类啊" class="headerlink" title="6. 位操作是最适合计算机的，但读起来真的是反人类啊"></a>6. 位操作是最适合计算机的，但读起来真的是反人类啊</h4>]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>源码分析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>有赞三年简历</title>
+    <url>/2020/03/18/%E6%9C%89%E8%B5%9E%E4%B8%89%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
+    <content><![CDATA[<h2 id="有赞三年——2017-03～2020-03"><a href="#有赞三年——2017-03～2020-03" class="headerlink" title="有赞三年——2017-03～2020-03"></a>有赞三年——2017-03～2020-03</h2><h4 id="Offer"><a href="#Offer" class="headerlink" title="Offer"></a>Offer</h4><p>17年3月份我还在家里刚做毕业设计，想着毕业了该找工作了，在阿里上投了校招，但是感觉流程好长啊，不想等，打开拉勾的时候<a id="more"></a>，刚好看到有赞CTO的演讲，题目大概是为什么你不想错过2017年的有赞，听完这场演讲之后，就开始在网上各种收集资料了解有赞，了解白鸦，了解CTO崔，在百度上碰巧查到了崔的微博，本着拜读大佬微博的心态点进去了看了下，翻了几页，刚好看到了CTO的邮箱，于是给CTO发了封邮件，大概就是想来有赞实习，附上了简历，我还是第一次使用邮件交流，没想到CTO居然回复我了，当时感觉有点小激动的，于是就开始各种面试，经过了三轮技术面试跟hr面试，终于拿到了实习Offer。本来是两轮技术面就过了，但是去现场的时候，可能是因为认错人了，把我拉过去又面了一次。这还是有一次周会聊起这事儿，才知道我的TL都不知道我面试了三轮</p>
+<h4 id="实习工作"><a href="#实习工作" class="headerlink" title="实习工作"></a>实习工作</h4><p>当时自己学的是java，来到有赞发现当时还是一个php单体应用，简单的学了下php语法，当时任务都是有伴（类似导师）安排的，都是简单的包接口，等熟悉了之后，才开始开发一些比较复杂的业务</p>
+<h4 id="正式工作"><a href="#正式工作" class="headerlink" title="正式工作"></a>正式工作</h4><p>转正之后主要参与的是分销，精选，平台运营的业务，还有就是php体系迁移到java+node的体系。<br>当时有几件比较印象深刻的事。<br>来有赞的第一个双11，上线精选平台。从国庆放假回来开始，双11之前必须上线，第一次经历倒排项目，当时跟组里的小伙伴连续加班了25天，终于把项目推上线了。<br>在迁移分销的时候背了个故障。原因是清退分销商的时候要关闭分销商的店铺交易，结果参数传错把供货商的交易给关了，幸好清退是低频操作，当时就是很慌，还要赔钱，后来就开始敬畏线上代码了。</p>
+<h4 id="转组"><a href="#转组" class="headerlink" title="转组"></a>转组</h4><p>在分销待了一年，转到行业电商组，开始做垂直电商的解决方案。主要负责了多网点，小票打印，后来又参与了微页面，素材中心，内容中心等业务。<br>在分销主要是做后台管理，老实说确实没有行业电商的业务好玩，而且在行业电商那边开始要考虑接口性能，降级，限流等等，因为有些接口处于交易链路上。所以19年双11进行了一次优化，日夜颠倒，跟同事轮流半夜搞压力测试，白天修代码，在不加机器的的前提下把性能提升15倍，老实说在行业电商那段时间是成长最多的</p>
+<h4 id="离职"><a href="#离职" class="headerlink" title="离职"></a>离职</h4><p>2020年3月份我离职了，离职当天，我到我还能找到的工位上跟每个人都告别了，有些人很惊讶，有些人很难过，其实跟他们告别的时候接触到他们的眼神，我自己都差点掉眼泪了</p>
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><p>在有赞的三年给好多人起了外号，大家也给我起了好多外号，招待罗（因为每次团队来新人都是我去招待，唠嗑），破冰罗（破冰的时候喜欢问你有什么梦想，为什么来这里），搭肩罗（跟男生走着走着就会搭别人的肩膀，当然我爱好是女），尴罗（在年会上表演脱口秀的时候插了几个冷笑话），陀罗，佛罗等等等等，我自己都数不来了。。。</p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>经历</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring揭秘-二刷读书笔记_2020.03.17</title>
+    <url>/2020/03/17/Spring%E6%8F%AD%E7%A7%98%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-%E4%BA%8C%E5%88%B7-2020-03-17/</url>
+    <content><![CDATA[<h2 id="Spring揭秘"><a href="#Spring揭秘" class="headerlink" title="Spring揭秘"></a>Spring揭秘</h2><ol>
+<li><p>Bean 装配的整体流程（BeanFactory）<a id="more"></a></p>
+<ol>
+<li><p>容器启动</p>
+<ol>
+<li><p>加载配置文件</p>
+</li>
+<li><p>配置文件（如:xml）转换成BeanDefinition</p>
+<ol>
+<li><p>转换过程中Spring提供了BeanFactoryPostProcessor的扩展点，可以通过该扩展点修改BeanDefinition。比如PropertyPlaceHolderConfigurer可以把xml中使用的占位符替换成实际的值</p>
+</li>
+<li><p>CustomEditorConfig.不修改BeanDefinition的值，只是单纯的注入数据，以供后续getBean的时候使用，常用来把String的配置转换成各种对象。比如StringArrayPropertyEditor把逗号分割的字符串转为字符串数组</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Bean实例化</p>
+<ol>
+<li><p>实例化对象</p>
+<ol>
+<li>实例化对象通过BeanWrapper包裹</li>
+</ol>
+</li>
+<li><p>设置对象属性，如果对象实现了XXXAware接口，就注入相应的对象，比如ApplicationContextAware</p>
+</li>
+<li><p>BeanPostProcessor.postProcessBeforeInitialization的前置处理</p>
+<ol>
+<li>Aware的注入就是通过这种方式实现的</li>
+</ol>
+</li>
+<li><p>afterPropertiesSet方法跟init-method方法执行</p>
+</li>
+<li><p>BeanPostProcessor.postProcessAfterInitialization的后置处理</p>
+</li>
+<li><p>...</p>
+</li>
+</ol>
+</li>
+<li><p>FactoryBean</p>
+<ol>
+<li>bean在xml中的配置可以采用工厂方法来注入一个对象，当你不想使用xml做复杂配置的时候，可以实现FactoryBean，并将其配置到xml中，这样获取对象的时候对调用FactoryBean的getObject方法获取对象，所以FactoryBean本身是一个等价于工厂的Bean</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Application</p>
+<ol>
+<li><p>统一资源加载的秘密</p>
+<ol>
+<li><p>Spring自己抽象了Resource，ResourceLoader</p>
+</li>
+<li><p>ApplicationContext继承了 ResourceLoader</p>
+</li>
+</ol>
+</li>
+<li><p>i18n</p>
+</li>
+</ol>
+</li>
+<li><p>AOP</p>
+<ol>
+<li><p>组成</p>
+<ol>
+<li><p>JoinPoint : 切入点，如xxx类的xxx方法</p>
+</li>
+<li><p>PointCut：切入点的描述（方法名，正则表达）</p>
+</li>
+<li><p>Advice：横切逻辑的载体</p>
+<ol>
+<li><p>Before Advice</p>
+</li>
+<li><p>After Advice</p>
+</li>
+<li><p>Around Advice</p>
+</li>
+</ol>
+</li>
+<li><p>Aspect：切面实体，封装PointCut，Advice</p>
+</li>
+<li><p>逻辑织入器：</p>
+<ol>
+<li>Spring AOP -> ProxyFactory</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>横切时机</p>
+<ol>
+<li><p>编译器</p>
+</li>
+<li><p>运行期</p>
+<ol>
+<li><p>动态代理</p>
+</li>
+<li><p>字节码生成</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Spring-AOP</p>
+<ol>
+<li><p>JoinPoint：方法</p>
+</li>
+<li><p>PointCut：描述JoinPoint，可以通过类名，方法名过滤，通过方法名过滤的时候还可以区分是否关注方法参数，可以实现方法名+参数值级别的过略</p>
+</li>
+<li><p>Advice</p>
+<ol>
+<li><p>per-class：Advice实例可以在对象的所有实例上共享，Before/After/Throwing/Returning Advice</p>
+</li>
+<li><p>per-instance：为每个实例生产各自的的逻辑，IntroductionInterceptor</p>
+</li>
+</ol>
+</li>
+<li><p>Aspect：</p>
+<ol>
+<li><p>组装</p>
+</li>
+<li><p>顺序越小优先级越高</p>
+</li>
+</ol>
+</li>
+<li><p>织入器：</p>
+<ol>
+<li><p>ProxyFactory</p>
+</li>
+<li><p>IOC+AOP</p>
+<ol>
+<li><p>ProxyFactoryBean继承FactoryBean，ProxyFactory的公用父类</p>
+</li>
+<li><p>在getObject中调用生成代理的方法即可</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RocketMQ实战与原理解析读书笔记_2020.03.16</title>
+    <url>/2020/03/16/RocketMQ%E5%AE%9E%E6%88%98%E4%B8%8E%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-16/</url>
+    <content><![CDATA[<p>书名 BOOK TITLE：RocketMQ实战与原理解析</p>
+<p>第一部分：整体架构</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>场景：解耦，异步，削峰，分发</p>
+</li>
+<li><p>整体架构</p>
+<a id="more"></a>
+<ol>
+<li><p>Producer</p>
+</li>
+<li><p>Consumer</p>
+</li>
+<li><p>NameServer（集群）</p>
+</li>
+<li><p>Broker（集群，每个Broker主从架构）</p>
+<ol>
+<li><p>Topic</p>
+<ol>
+<li><p>Consumer Groups 维度</p>
+</li>
+<li><p>Message Queues 维度</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Consumer</p>
+<ol>
+<li><p>消息模式</p>
+<ol>
+<li><p>cluster：消息只会被一个consumer消费</p>
+</li>
+<li><p>broadcast：消息会被所有consumer消费</p>
+</li>
+</ol>
+</li>
+<li><p>数据拉取方式</p>
+<ol>
+<li><p>push-长轮询：使用长轮询的方式实现。需要C/S的配合，C默认阻塞15s，S收到请求的时候，如果没有新的消息，会分3次阻塞，每次持续5s，阻塞过程中若发现数据，则返回，知道结束都没发现新消息则返回空</p>
+</li>
+<li><p>pull：遍历Topic下的所有Message Queue，本地维护offset</p>
+</li>
+</ol>
+</li>
+<li><p>ConsumerGroup：消息在ConsumerGroup维度是广播的，对于具体的Consumer的模式要根据消息模式</p>
+</li>
+<li><p>流控：push-长轮询通过在本地维护一个ProcessQueuey（Tree Map：key是offset + 读写锁），存放所有未处理的消息（Message Queue在本地的映射），通过计算消息大小，offset跨度等等实现流控</p>
+</li>
+</ol>
+</li>
+<li><p>Producer</p>
+<ol>
+<li><p>默认的：结合重试+注意处理返回结果。slave的同步机制，磁盘flush机制都有可能出现异常</p>
+</li>
+<li><p>延时的：只支持预设值</p>
+</li>
+<li><p>自定义的：发送到指定的Message Queue</p>
+</li>
+<li><p>事务的：二阶段提交协议。Client预提交一个事务，Server持久化到磁盘，Client执行事物的其他操作，根据结果，提交或者回滚server的事务。如果client提交或者回滚，则使用回查接口查询该事务是要回滚还是提交</p>
+</li>
+</ol>
+</li>
+<li><p>Offset</p>
+<ol>
+<li><p>push-长轮询 或者 cluster模式，offset由server管理</p>
+</li>
+<li><p>pull方式 或者 broadcast，需要Client自己维护offset，包括offset持久化</p>
+</li>
+<li><p>Consumer提交的自定义offset只会在server拿不到offset的时候起作用</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+</blockquote>
+<p>第二部分：NameServer</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>维护Broker信息</p>
+</li>
+<li><p>维护Topic信息</p>
+</li>
+<li><p>Broker创建topic之后注册相应的数据到NameServer</p>
+</li>
+<li><p>通信框架Netty</p>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+</blockquote>
+<p>第三部分：Broker</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>Commit Log &amp; commit queue</p>
+</li>
+<li><p>高可用：master-slave架构</p>
+<ol>
+<li><p>consumer高可用：master主读写，master扛不住的时候自动切换到slave</p>
+</li>
+<li><p>producer高可用：topic的Message Queue分布在各个broker上，挂掉一个也还是可以继续使用</p>
+</li>
+</ol>
+</li>
+<li><p>同步/异步刷盘：同步写入到磁盘再返回成功，异步写入文件系统就返回</p>
+</li>
+<li><p>同步/异步复制：master-slave之间的数据复制策略</p>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+</blockquote>
+<p>第四部分：可靠性</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>顺序消息</p>
+<ol>
+<li><p>全局顺序：一个topic下创建一个MessageQueue，Producer/Consumer的并发也设置为1</p>
+</li>
+<li><p>局部顺序：通过业务id将消息投递到指定的的message queue，在consumer queue消费的时候加锁实现顺序访问</p>
+</li>
+</ol>
+</li>
+<li><p>消息重复：无法做到exactly-once，RocketMq选择确保一定投递，但是消息可能会重复，需要业务方做好幂等控制</p>
+<ol>
+<li>Producer带重试发出消息，broker接收成功，但是返回ack的时候失败了，producer重试则消息重复</li>
+</ol>
+</li>
+<li><p>故障控制</p>
+<ol>
+<li><p>多master，每个master带slave</p>
+</li>
+<li><p>master-slave使用sync/async同步</p>
+</li>
+<li><p>producer使用sync/async</p>
+</li>
+<li><p>刷盘策略使用sync/async</p>
+</li>
+</ol>
+</li>
+<li><p>消息优先级</p>
+<ol>
+<li><p>topic拆分</p>
+</li>
+<li><p>单topic下使用更多的message queue</p>
+</li>
+<li><p>使用PullConsumer定制消息处理</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+</blockquote>
+<p>第五部分：吞吐量</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>消息过滤：</p>
+<ol>
+<li><p>tag消息过滤</p>
+</li>
+<li><p>sql</p>
+</li>
+<li><p>server filter</p>
+</li>
+</ol>
+</li>
+<li><p>提升consumer的处理能力</p>
+<ol>
+<li><p>增加consumer：加机器，加consumer实例，不要超过message queue的个数</p>
+</li>
+<li><p>consumer端并发处理，一次性拉取更多数据合并批处理</p>
+</li>
+<li><p>合理跳过消息</p>
+</li>
+</ol>
+</li>
+<li><p>consumer的负载均衡</p>
+<ol>
+<li><p>push-consumer：把message queue分配给具体的consumer处理</p>
+</li>
+<li><p>pull-consumer：可以获得所有的message queue，可以自定义负载均衡的实现</p>
+</li>
+</ol>
+</li>
+<li><p>提升producer的发送速度</p>
+<ol>
+<li><p>增加producer的并发量</p>
+</li>
+<li><p>oneway方式发送，不等待应答</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>InnoDB存储引擎读书笔记_2020.03.13</title>
+    <url>/2020/03/13/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-13/</url>
+    <content><![CDATA[<p>第一部分：存储引擎</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>InnoDB &amp; MyISAM<a id="more"></a></p>
+<ol>
+<li><p>目标：面向在线事务处理的应用，面向多维数据分析处理的应用</p>
+</li>
+<li><p>存储限制：64T，无</p>
+</li>
+<li><p>MVCC，非锁定读：支持，不支持</p>
+</li>
+<li><p>Geo处理：不支持，支持</p>
+</li>
+<li><p>自适应哈希：支持，不支持</p>
+</li>
+<li><p>聚簇索引：支持，不支持</p>
+</li>
+<li><p>数据缓存：支持，不支持</p>
+</li>
+<li><p>存储消耗，内存消耗：高，地</p>
+</li>
+<li><p>批量插入速度：慢，较快</p>
+</li>
+<li><p>外键：支持，不支持</p>
+</li>
+</ol>
+</li>
+<li><p>InnoDB</p>
+<ol>
+<li><p>插入缓冲</p>
+</li>
+<li><p>二次写</p>
+</li>
+<li><p>自适应hash</p>
+</li>
+<li><p>AIO（IO合并等优化）</p>
+</li>
+<li><p>刷新临接脏页</p>
+</li>
+</ol>
+</li>
+<li><p>索引</p>
+</li>
+<li><p>锁</p>
+<ol>
+<li><p>锁类型</p>
+<ol>
+<li><p>I锁</p>
+</li>
+<li><p>IX锁</p>
+</li>
+<li><p>S锁</p>
+</li>
+<li><p>X锁</p>
+</li>
+<li><p>锁关系:</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<hr>
+<pre><code>IS   IX   S   X
+</code></pre><p>  IS   1    1    1<br>  IX   1    1<br>  S    1         1<br>  X</p>
+<hr>
+<ol>
+<li><p>锁引申</p>
+<ol>
+<li><p>一致性非锁定读</p>
+<ol>
+<li>MVCC实现，通过读取行记录的历史版本，实现读取的时候不加锁</li>
+</ol>
+</li>
+<li><p>一致性锁定读</p>
+<ol>
+<li>显示加S/X锁</li>
+</ol>
+</li>
+<li><p>自增长</p>
+<ol>
+<li><p>表锁自增</p>
+</li>
+<li><p>互斥量自增</p>
+</li>
+</ol>
+</li>
+<li><p>外键</p>
+<ol>
+<li>回源表查询的时候，显示使用S锁</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>锁算法</p>
+<ol>
+<li><p>Record Lock</p>
+<ol>
+<li>单行记录锁</li>
+</ol>
+</li>
+<li><p>Gap Lock</p>
+<ol>
+<li>范围锁</li>
+</ol>
+</li>
+<li><p>Next-Key Lock</p>
+<ol>
+<li><p>单行+范围锁</p>
+</li>
+<li><p>对于唯一属性的锁，会降级成为Record Lock</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>锁存在的问题：锁用来实现事务隔离，使得事务可以并发，但仍然存在一些问题</p>
+<ol>
+<li><p>脏读：在一个事务中读到了别的事务未提交的数据</p>
+<ol>
+<li>MVCC 可以解决</li>
+</ol>
+</li>
+<li><p>不可重复读（幻读）：在一个事务中，读到了别的事务提交的数据</p>
+<ol>
+<li>Next-Key Lock可以通过范围的锁定解决幻读</li>
+</ol>
+</li>
+<li><p>丢失更新：两个事务的select 跟 update 交替执行</p>
+<ol>
+<li>在select的时候加X锁可以解决</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>死锁</p>
+<ol>
+<li><p>检测</p>
+<ol>
+<li><p>waits-for graph：</p>
+<ol>
+<li><p>图节点:事务定义</p>
+</li>
+<li><p>节点的边：节点A指向节点B，A依赖B的锁释放</p>
+</li>
+<li><p>存在回路则死锁</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">&lt;!-- --&gt;</div></pre></td></tr></table></figure>
+<ol>
+<li><p>事务的实现</p>
+<ol>
+<li><p>手段：write-ahead log+LSN：在事务提交之前先写undo log redo log</p>
+<ol>
+<li><p>redo log：记录每一个页面的改动</p>
+</li>
+<li><p>undo log：insert/update log 记录插入的数据，或者更新的字段跟字段值</p>
+</li>
+</ol>
+</li>
+<li><p>redo log 跟 binlog</p>
+<ol>
+<li><p>redo log在事务提交的过程中写的，binlog在事务完成之后写</p>
+</li>
+<li><p>redo log 针对的是数据页的改动记录，binlog是用于实现主从同步</p>
+</li>
+<li><p>redo log是引擎层面的实现，binlog是mysql服务层面的实现</p>
+</li>
+<li><p>redo log是幂等的，binlog不能保证幂等</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>对于大部分的异常，mysql不会回滚，死锁异常则会回滚</strong></p>
+<p><strong>问题</strong></p>
+<p><strong>mysql的线程模型？</strong></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Redis设计与实现读书笔记_2020.03.08</title>
+    <url>/2020/03/08/Redis%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-03-08/</url>
+    <content><![CDATA[<p>阅读心得 LEARNINGS</p>
+<p>第一部分：</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>数据结构<a id="more"></a></p>
+<ol>
+<li><p>字符串（int len,int free,char[] buf）</p>
+<ol>
+<li><p>对c字符串的封装，’\0’不计入lengh属性</p>
+</li>
+<li><p>有length数据，O(1)复杂度查询length</p>
+</li>
+<li><p>有字符串空间检测，自动扩容，防止越界覆盖</p>
+</li>
+<li><p>通过free字段实现空间预分配，而不是每次都要重新分配内存空间，并提供api在需要的时候释放多余的空间</p>
+</li>
+<li><p>二进制安全，可以兼容’\0’字符</p>
+</li>
+<li><p>兼容部分C字符串函数</p>
+</li>
+</ol>
+</li>
+<li><p>链表</p>
+<ol>
+<li><p>双向</p>
+</li>
+<li><p>无环</p>
+</li>
+<li><p>有表头，表尾指针</p>
+</li>
+<li><p>有length属性</p>
+</li>
+<li><p>多态的节点值</p>
+</li>
+</ol>
+</li>
+<li><p>字典</p>
+<ol>
+<li><p>结构（1，2用于多态的扩展）</p>
+<ol>
+<li><p>type</p>
+</li>
+<li><p>privadata</p>
+</li>
+<li><p>ht[2]，常规情况下只是用ht[0]，rehash的时候会使用到ht[0]</p>
+<ol>
+<li><p>dictEntry 数组的每一个对象是dictEntry</p>
+<ol>
+<li><p>k,v</p>
+</li>
+<li><p>next ，hash冲突的时候使用next串联</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>rehashindex，rehash的状态标记</p>
+</li>
+</ol>
+</li>
+<li><p>rehash</p>
+<ol>
+<li><p>h[1]的空间分配</p>
+</li>
+<li><p>h[0] --rehash--> h[1]</p>
+</li>
+<li><p>h[1] ----> new Dict</p>
+</li>
+</ol>
+</li>
+<li><p>周期性调度渐进式rehash</p>
+<ol>
+<li><p>h[1]的空间分配</p>
+</li>
+<li><p>设置标记位 rehashIndex = 0</p>
+</li>
+<li><p>判断标记位，如果是在rehash，则对dict的rud时，顺便rehash到h[1]</p>
+</li>
+<li><p>当全部rehash完成之后，标记位重新置为-1</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>跳跃表</p>
+<ol>
+<li>给有序链表加索引，提升检索速度</li>
+</ol>
+</li>
+<li><p>整数集合</p>
+<ol>
+<li>通过encoding字段表面当前存储的整数类型(int_16,int_32,int_64)，尽可能的节约内存</li>
+</ol>
+</li>
+<li><p>压缩列表</p>
+</li>
+<li><p>对象</p>
+<ol>
+<li><p>字符串对象</p>
+</li>
+<li><p>哈希对象</p>
+</li>
+<li><p>列表对象</p>
+</li>
+<li><p>集合对象</p>
+</li>
+<li><p>有序集合对象</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>redisServer</p>
+<ol>
+<li><p>redisDB</p>
+<ol>
+<li><p>dict dict 存放 kv 空间</p>
+<ol>
+<li>SET / GET 等K-V指令操作的是该空间</li>
+</ol>
+</li>
+<li><p>dict expires 存放带有过期时间的建</p>
+<ol>
+<li><p>过期删除策略</p>
+<ol>
+<li><p>定时器，对CPU不友好</p>
+</li>
+<li><p>惰性删除，获取的时候判断过期，对内存不友好</p>
+</li>
+<li><p>定期删除</p>
+</li>
+</ol>
+</li>
+<li><p>redis采用惰性删除解惑定期删除</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题：</strong></p>
+</blockquote>
+<p>第二部分：</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>多机的主从复制实现</p>
+<ol>
+<li><p>旧版的集群复制</p>
+<ol>
+<li><p>同步</p>
+<ol>
+<li><p>客户端发送sync指令给服务端</p>
+</li>
+<li><p>服务端生产rdb文件给客户端，并将后续的命令写入缓冲区</p>
+</li>
+<li><p>rdb传输完成之后，发送缓冲命令</p>
+</li>
+</ol>
+</li>
+<li><p>命令传播</p>
+</li>
+<li><p>缺点：sync同步太重</p>
+</li>
+</ol>
+</li>
+<li><p>新版复制（引入部分重同步，断线之后，再次像服务器发起同步请求的时候，进入部分重同步模式）</p>
+<ol>
+<li><p>部分重同步（断线恢复的情况）</p>
+<ol>
+<li><p>主服务器偏移量A，服务器ID</p>
+</li>
+<li><p>从服务器偏移量B，主服务器ID</p>
+</li>
+<li><p>主服务器维护偏移量跟1M缓冲区</p>
+</li>
+<li><p>从服务器提供偏移量B+主服务器ID，如果朱服务器ID变更，则进行完整重同步，若服务器id相同，看看在缓冲区中是否能拿到，可以则执行部分重同步，否则使用完整同步</p>
+</li>
+</ol>
+</li>
+<li><p>命令丢失检查</p>
+<ol>
+<li><p>主服务器写向从服务器</p>
+</li>
+<li><p>从服务器返回ACK偏移量</p>
+</li>
+<li><p>若偏移量不等于主服务器的偏移量，则主服务器主动重新发送缓冲区中的数据</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>Sentinel系统，redis高可用的保证</p>
+<ol>
+<li><p>sentinel模式启动redis服务器</p>
+</li>
+<li><p>sentinel连接主服务器，并自动发现所有的从服务器和其他sentinel</p>
+</li>
+<li><p>当达到一定数量的sentinel都检测到主服务器下线，则客观认为该服务器下线了</p>
+</li>
+<li><p>选举领头sentinel</p>
+</li>
+<li><p>sentinel向所有的检测sential发出选举请求，直至选出领头sentinel</p>
+</li>
+<li><p>领头sentinel对主服务器下线</p>
+</li>
+<li><p>从从服务器里筛选出新的主服务器</p>
+</li>
+<li><p>同步所有从服务器的slave of</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题：</strong></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入理解java虚拟机读书笔记_2020.02.18</title>
+    <url>/2020/02/18/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3java%E8%99%9A%E6%8B%9F%E6%9C%BA%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-02-18/</url>
+    <content><![CDATA[<p>第一部分：<strong>java的发展史，jvm的发展史</strong></p>
+<p><strong>主要内容：</strong><a id="more"></a></p>
+<ol>
+<li><p>java的出现：Green Project，开发在电子产品上运行的程序架构</p>
+</li>
+<li><p>jvm迭代：Classic Vm -> Exact Vm ，HotSpot Vm （解释器跟编译器的混合执行）</p>
+</li>
+<li><p>jdk跟jre：java开发工具（java语言，java api，jvm），java运行环境（java se api，jvm）</p>
+</li>
+<li><p>java的优势：结构严谨，面向对象，内存管理与指针越界管理，热点代码检测，运行时编译及优化，一次编写，到处运行，庞大而完整的生态</p>
+</li>
+</ol>
+<p><strong>联想：</strong></p>
+<ol>
+<li>java9，10，11，12，13新特性：模块化，集合工程，各种增强，局部类型推断var关键字，加入json解析api，httpclient等</li>
+</ol>
+<p><strong>问题：</strong></p>
+<ol>
+<li>为啥解释器跟编译器混合执行就牛逼了？</li>
+</ol>
+<p>第二部分：jvm的内存管理</p>
+<p><strong>主要内容：</strong></p>
+<ol>
+<li><p>jvm的内存划分</p>
+<ol>
+<li><p>程序计数器：记录指令执行</p>
+</li>
+<li><p>虚拟机栈：</p>
+<ol>
+<li><p>-Xss</p>
+</li>
+<li><p>java方法执行时局部变量与栈帧的分配，请求的栈深度过大-StackOverFlowError，无法再申请内存分配栈帧-OutOfMemoryError</p>
+</li>
+</ol>
+</li>
+<li><p>本地方法栈：</p>
+<ol>
+<li><p>-Xos</p>
+</li>
+<li><p>本地方法执行时的内存分配，再hotsopt中，不区分本地方法栈与虚拟机栈</p>
+</li>
+</ol>
+</li>
+<li><p>java堆：</p>
+<ol>
+<li><p>-Xms 最小大小，-Xmn最大大小</p>
+</li>
+<li><p>常规对象分配的地方</p>
+</li>
+<li><p>OutOfMemoryError java heap space</p>
+</li>
+</ol>
+</li>
+<li><p>方法区：</p>
+<ol>
+<li><p>-XX：MaxPermSize</p>
+</li>
+<li><p>类元数据+运行时常量池</p>
+</li>
+<li><p>OutOfMemoryError perm space</p>
+</li>
+</ol>
+</li>
+<li><p>直接内存区：</p>
+<ol>
+<li>在虚拟机外分配使用的内存，常见于NIO中使用，避免内存复制</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>对象的创建</p>
+<ol>
+<li><p>对象内存的分配</p>
+<ol>
+<li><p>指针碰撞，计算对象大小，划分内存，要考虑同步</p>
+</li>
+<li><p>TLAB，在线程自己的内部空间里面分配</p>
+</li>
+<li><p>需要结合GC方式</p>
+</li>
+</ol>
+</li>
+<li><p>对象的内存布局</p>
+<ol>
+<li><p>对象头：hash code，分代年龄，锁状态，类型指针（确定对象是哪个类的实例）</p>
+</li>
+<li><p>对象实例数据</p>
+</li>
+<li><p>对齐空间</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>垃圾回收</p>
+<ol>
+<li><p>对象回收：</p>
+<ol>
+<li><p>先判断对象是否已死：</p>
+<ol>
+<li><p>引用计数法，无法识别两个死亡对象互相引用的情况</p>
+</li>
+<li><p>可达性分析，通过枚举Gc Roots，如：常量引用，静态变量引用，栈上的引用</p>
+</li>
+</ol>
+</li>
+<li><p>回收时机：安全点</p>
+</li>
+</ol>
+</li>
+<li><p>回收算法</p>
+<ol>
+<li><p>复制算法：内存消耗大</p>
+</li>
+<li><p>分代整理：基于复制算法的思路</p>
+</li>
+<li><p>标记整理：</p>
+</li>
+<li><p>标记清除：内存碎片</p>
+</li>
+</ol>
+</li>
+<li><p>回收器</p>
+<ol>
+<li><p>新生代</p>
+<ol>
+<li><p>serial：stop the world</p>
+</li>
+<li><p>ParNew：stop the world ，回收多线程并行</p>
+</li>
+<li><p>Parallel Scavenge：类似于ParNew 更注重于控制吞吐量</p>
+</li>
+</ol>
+</li>
+<li><p>老年代</p>
+<ol>
+<li><p>serial old：stop the world</p>
+</li>
+<li><p>parallel old：stop the world ，回收多线程并行</p>
+</li>
+<li><p>cms：</p>
+<ol>
+<li><p>标记：stop the world</p>
+</li>
+<li><p>并发标记：并发</p>
+</li>
+<li><p>重标记：stop the world</p>
+</li>
+<li><p>并发回收：并发，回收时，用户进程也在进行，所以会产生浮动垃圾。所以内存上需要留有余地</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>G1 能适用整堆上的垃圾回收</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>故障排查，性能分析工具</p>
+<ol>
+<li><p>bin目录下的自带工具</p>
+</li>
+<li><p>jconsole，visualvm</p>
+</li>
+</ol>
+</li>
+<li><p>调优案例总结</p>
+<ol>
+<li><p>高性能硬件</p>
+<ol>
+<li><p>采用逻辑集群+负载均衡的方式来发挥高性能硬件的优点</p>
+</li>
+<li><p>回收过大的内存区域，会导致GC时间过长</p>
+</li>
+</ol>
+</li>
+<li><p>集群通讯导致大对象累积在内存中</p>
+</li>
+<li><p>使用NIO。DirectMemory的回收直到full gc才会顺便回收，当堆外内存无法分配也会导致OutOfMemory</p>
+</li>
+<li><p>Runtime.exec()会创建系统进程，要慎用</p>
+</li>
+<li><p>依赖其他的远程服务太过耗时，导致线程，Socket挂起，直到jvm崩溃</p>
+</li>
+<li><p>数据结构导致内存翻倍，比如long 占用8B，Long 占用24B</p>
+</li>
+<li><p>桌面程序最小化之后，工作内存转移到磁盘，恢复的时候可能导致不正常的GC</p>
+</li>
+</ol>
+</li>
+</ol>
+<p><strong>联想：</strong></p>
+<ol>
+<li><p>jdk8新增MetaSpace，将类元数据从方法区中移动到meta space</p>
+</li>
+<li><p>G1的回收：<a href="http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="external">[http://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html]{.underline}</a></p>
+</li>
+</ol>
+<p><strong>问题：</strong></p>
+<p>第三部分：</p>
+<blockquote>
+<p><strong>主要内容：</strong></p>
+</blockquote>
+<ol>
+<li><p>平台无关性：java通过虚拟机+字节码文件实现了平台无关性，jvm不仅能识别java编译器生成的字节码文件，还有很多语言在字节码文件的基础上，实现了自己的编译器，把自己的语言规范编译成字节码文件交给jvm执行。字节码文件有自己一系列的定义，比如，文件开头1-4字节为魔数，接下来的5-8字节为版本号，9-10字节代表常量池，同时定义了很多结构体，跟固定的协议，来解析class文件，其中方法体的代码是通过编译成jvm 指令存放到code属性里面</p>
+</li>
+<li><p>类加载的时机</p>
+<ol>
+<li><p>new，类变量的访问与操作，静态方法调用</p>
+</li>
+<li><p>对类反射调用</p>
+</li>
+<li><p>初始化一个类的时候，若父类没有初始化，要先触发父类的初始化</p>
+</li>
+<li><p>虚拟机启动时，main方法所在的主类</p>
+</li>
+<li><p>动态语言支持如MethodHandler实例解析结果的方法句柄对应的类没有初始化（类似于反射）</p>
+</li>
+</ol>
+</li>
+<li><p>类的加载过程</p>
+<ol>
+<li><p>加载：将字节码的码流加载入jvm</p>
+</li>
+<li><p>验证：</p>
+<ol>
+<li><p>格式验证（魔数，版本等），通过后码流便按结构进入了方法去</p>
+</li>
+<li><p>元数据验证</p>
+</li>
+<li><p>字节码验证（程序语义验证）</p>
+</li>
+<li><p>符号引用验证</p>
+</li>
+</ol>
+</li>
+<li><p>准备</p>
+<ol>
+<li><p>类变量的分配内存空间</p>
+</li>
+<li><p>设置类变量初值</p>
+<ol>
+<li><p>static 变量 0，false，null等</p>
+</li>
+<li><p>static finnal 常量 显式的初始值</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>解析</p>
+<ol>
+<li>符号引用替换成直接饮用</li>
+</ol>
+</li>
+<li><p>初始化</p>
+<ol>
+<li>执行cinit（编译器自动收集所有类变量的赋值动作跟static静态代码块），并发问题由jvm控制，多线程并发也保证只执行一次，与init不同，init方法上实例构造器</li>
+</ol>
+</li>
+<li><p>使用</p>
+</li>
+<li><p>卸载</p>
+</li>
+</ol>
+</li>
+<li><p>类加载器</p>
+<ol>
+<li><p>Bootstrap ClassLoader 加载java_home下lib目录的jar</p>
+</li>
+<li><p>Extension ClassLoader 加载java_home下lib/ext目录的jar</p>
+</li>
+<li><p>类+类加载器唯一确定一个类</p>
+</li>
+<li><p>双亲委派模型，越是基础的类，越由上层加载器加载</p>
+</li>
+<li><p>双亲委派模型的破坏</p>
+<ol>
+<li><p>jndi，jdbc等，需要上层类加载器主动要求下层的类加载器帮忙加载</p>
+</li>
+<li><p>osgi：模块化</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>字节码执行引擎</p>
+<ol>
+<li><p>栈帧</p>
+<ol>
+<li><p>局部变量表</p>
+</li>
+<li><p>操作数栈</p>
+</li>
+<li><p>动态连接</p>
+</li>
+<li><p>方法返回地址（恢复调用者的栈帧）</p>
+</li>
+<li><p>附加信息</p>
+</li>
+</ol>
+</li>
+<li><p>方法调用</p>
+<ol>
+<li><p>解析（方法的调用版本在运行期是不可以改变的，这类方法的调用叫解析，如：静态方法，私有方法，这些方法在类加载的解析过程中，会把符号引用替换为直接引用）</p>
+</li>
+<li><p>分派</p>
+<ol>
+<li><p>静态分派：依赖静态类型定位方法执行版本如：方法重载，在编译期就能确定</p>
+</li>
+<li><p>动态分派：在运行期根据实际类型确定方法执行版本如：子类重写父类方法，invokevirtual指令会在实际类型中找方法</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>java的动态语言特性支持</p>
+<ol>
+<li><p>动态类型语言：在运行期才会去做类型检查，所以c,c++,java本身是一门静态类型语言</p>
+</li>
+<li><p>jdk7 提供了invokedaynamic指令，invoke包 执行方法句柄参数</p>
+</li>
+</ol>
+</li>
+<li><p>基于栈的执行引擎</p>
+<ol>
+<li><p>物理机大多基于寄存器做执行引擎，速度快，但与硬件耦合太紧</p>
+</li>
+<li><p>虚拟机基于栈的架构，速度稍慢，可移植性强</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题：</strong></p>
+<p>第四部分：程序编译与代码优化</p>
+<p><strong>主要内容：</strong></p>
+</blockquote>
+<ol>
+<li><p>编译期优化</p>
+<ol>
+<li><p>语法糖</p>
+<ol>
+<li>范型，增强for循环，自动拆装箱，</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>运行期优化</p>
+<ol>
+<li><p>解释器：把字节码解释机器吗</p>
+</li>
+<li><p>编译器：把整个方法，或者某段循环的代码，进行优化编译成机器码</p>
+</li>
+<li><p>编译优化：</p>
+<ol>
+<li><p>公共子表达式消除</p>
+</li>
+<li><p>数组边界检查消除（如果99%的情况不回越界，可以不判断越界情况直接使用，并处理越界异常，同样适用于NPE）</p>
+</li>
+<li><p>方法内联：如果在运行时不回出现多个方法版本，可以将代码内联，减少栈分配与复原</p>
+</li>
+<li><p>逃逸分析：如果能确定对象不回逃逸出某个范围，则可以使用栈上分配，同步消除，标量替换</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p><strong>问题</strong></p>
+<p>第五部分：高效并发</p>
+<p><strong>主要内容：</strong></p>
+</blockquote>
+<ol>
+<li><p>java内存模型</p>
+<ol>
+<li><p>内存操作</p>
+<ol>
+<li><p>lock</p>
+</li>
+<li><p>unlock</p>
+</li>
+<li><p>read：从主内存read到工作内存</p>
+</li>
+<li><p>load：从工作内存load到变量副本</p>
+</li>
+<li><p>use：工作内存到执行引擎</p>
+</li>
+<li><p>assign：赋值给工作内存的变量</p>
+</li>
+<li><p>store：工作内存的变量值store到主内存</p>
+</li>
+<li><p>write：把主内存的值放入到主内存的变量中</p>
+</li>
+</ol>
+</li>
+<li><p>volatile的使用</p>
+<ol>
+<li><p>语义：防止指令重排，变量的可见性</p>
+</li>
+<li><p>使用的约束：不依赖当前值或者只有单一的线程修改，不与其他的状态变量参与到不变约束</p>
+</li>
+<li><p>变量规则（1-4 实现可见，5，6实现防止指令重排）</p>
+<ol>
+<li><p>use 之前 必须 load</p>
+</li>
+<li><p>load 之后 必须 use</p>
+</li>
+<li><p>store 之前 必须 assign</p>
+</li>
+<li><p>assign 之后 必须 store</p>
+</li>
+<li><p>A->V ：use + assign,P->V:read+write,B ->W: load+store,Q -> W: read+write</p>
+</li>
+<li><p>lock 空操作的内存屏障</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>先行发生原则：</p>
+<ol>
+<li><p>程序次序规则：一个线程内，书写在前面的先行发生于书写在后面的</p>
+</li>
+<li><p>管程锁定：unlock 先行发生于后面对同一个锁的lock</p>
+</li>
+<li><p>volatile：写操作先行发生于后面的读操作</p>
+</li>
+<li><p>线程终止：线程中的所有操作先行发生于对此线程的终止检测</p>
+</li>
+<li><p>线程中断：对线程interrupt调用先行发生于对中断的检测</p>
+</li>
+<li><p>对象终结：对象初始化限行发生于对象finalize方法</p>
+</li>
+<li><p>传递性：A先行发生于B，B 。。。 C 则 A。。。C</p>
+</li>
+</ol>
+</li>
+<li><p>java线程</p>
+<ol>
+<li><p>jdk1.2之前使用用户线程实现，1.2之后使用操作系统的的原生的线程模型实现</p>
+</li>
+<li><p>线程调度</p>
+<ol>
+<li><p>New</p>
+</li>
+<li><p>Ruing</p>
+</li>
+<li><p>Waiting/Timed Waiting</p>
+</li>
+<li><p>Blocked</p>
+</li>
+<li><p>Terminated</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>线程安全与锁优化</p>
+<ol>
+<li><p>自旋锁：在锁能很快释放掉的情况下，可以通过自旋在不放弃cpu的情况下，减少线程调度的开销</p>
+</li>
+<li><p>自适应自旋：通过统计上一次的自旋情况来决定是否要自旋，还是挂起等待</p>
+</li>
+<li><p>锁消除：局部对象的引用安全，没有逃逸等，可以使用锁消除</p>
+</li>
+<li><p>锁粗化：多次重复对同一个锁操作，可以扩大锁范围</p>
+</li>
+<li><p>轻量级锁：使用cas方式加锁</p>
+</li>
+<li><p>偏向锁：在持有锁之后，没有竞争</p>
+</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p><strong>联想：</strong></p>
+<p>解决java中的并发问题，其实变成是捋清楚内存操作的顺序</p>
+<p><strong>问题：</strong></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>netty权威指南读书笔记_2020.01.25</title>
+    <url>/2020/01/25/netty%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0-2020-01-25/</url>
+    <content><![CDATA[<p>第一章：linux io 模型</p>
+<p>轮训：阻塞，非阻塞</p>
+<p>回调：I/O多路复用，信号，异步</p>
+<p>多路复用：linux的select/poll，将fd注册到select/poll上，selcet/poll通过线性遍历执行回调，fd大小有限制，通过将fd注册到select/poll，可以直接处理多个客户端的请求（并发），由于select的fd大小限制，线性遍历导致性能也是线性下降，使用epoll替代了select，fd大小不受限制，在socket层回调，只有活跃socket才会回调，无需遍历，使用内存映射，减少内存复制，epoll的api也更简洁<br><a id="more"></a><br>第二章：BIO / NIO / AIO</p>
+<p>BIO：同步阻塞IO，主要使用 ServerSocket Socket 对象，通过Input/OutputStream进行读写，每一个Client的请求，都相应的要在服务端创建一个线程来处理请求，可以直接压垮服务器</p>
+<p>改进BIO：把请求封装，放到任务队列，使用线程池处理任务队列，由于同步阻塞IO的原因如写快读慢，就可能导致线程处理过慢，任务队列累计，最终拒绝服务</p>
+<p>NIO：异步非阻塞IO，有阻塞/非阻塞模式，java 1.4使用的还是select模型，改进后使用了epoll，一个线程就可以处理多路复用的轮训就可以实现高并发的客户端接入，如果channel的活跃数量上升，epoll也会退化成select。主要使用ServerSocketChannel SocketChannel Selector对象，通过Channel加缓存Buffer进行读写，每一个Client都是多路复用器上的一个Channel，通过轮训多路复用器上的活跃channel，判断事件类型，并进行对应的处理，由于缓存的读写都是非阻塞的，所以存在读写半包的情况，NIO只是相对于BIO是异步的。</p>
+<p>AIO：真正的异步IO，主要使用AsynchronousSererverSocketChannel，AsynchronousSocketChannel 对象，通过Channel+Buffer异步读写数据</p>
+<p>第三章：Netty NIO 实现一个时间服务器</p>
+<p>NioEventLoopGroup 线程组，包含了一组NIO线程</p>
+<p>Bootstrap 辅助启动类 bind方法，connect方法</p>
+<p>ChannelInitializer</p>
+<p>ChannelHandlerAdapter 网络事件的读写操作</p>
+<p>Unpooled</p>
+<p>ByteBuf</p>
+<p>ChannelHandlerContext</p>
+<p>第四章：拆包/粘包的netty解决方案</p>
+<p>拆包/粘包的产生：应用层数据大于缓冲区的大小，TCP协议的读写滑动窗口会动态变化，TCP本身有个MSS的限制会导致TCP层的数据报拆分，以太网层有MTU限制会导致数据报拆分，</p>
+<p>解决方案：定长分割，分隔符分割，协议分割</p>
+<p>第五章：字符分割器，定长分割器的使用</p>
+<p>ServerBootStrap，BootStrap</p>
+<p>childHandler，handler</p>
+<p>ByteBuf同一个对象发多次的情况，要重置读写位置</p>
+<p>第六章：编解码</p>
+<p>java序列化：java内部的序列化协议，无法跨语言，编码性能低，编码之后的码流也太大</p>
+<p>编解码框架：</p>
+<p>Google Protobuf 机构化存储，高效，跨语言，跨平台，扩展性，官方支持java</p>
+<p>Facebook Thrift 解决大数据量的传输通信，跨语言调用</p>
+<p>JBoss Marshalling JBoss内部使用，应用范围有限</p>
+<p>第七章：MessagePack</p>
+<p>高效的二进制序列化框架，码流小，跨语言，api简单，Message注解</p>
+<p>解码channel：MessageToMessageDecoder</p>
+<p>编码channel：MessageToByteEncoder</p>
+<p>数据报定长分割器：</p>
+<p>LengthFieldPrepender：使用n个字节表示消息体长度</p>
+<p>LengthFieldBasedFrameDecoder：</p>
+<p>第八/九章</p>
+<p>Google Protobuf ，JBoss Marshalling</p>
+<p>第十章：Http协议开发（实现一个十分轻量级的服务端，跟Tomcat相比）</p>
+<p>实现Http协议的文件服务器：</p>
+<p>HttpRequestDecoder</p>
+<p>HttpObjectAggregator 将http request/response 聚合成 => FullHttpRequest,FullHttpResponse</p>
+<p>HttpResponseEncoder</p>
+<p>ChunkWriteHandler 支持异步发送大的码流</p>
+<p>SimpleChannelInboundHandler</p>
+<p>实现Http协议+json的协议栈：</p>
+<p>客户端：Order对象转json的encoder，json转Order对象的decoder</p>
+<p>服务端：json转Order的decoder，Order转json的encoder</p>
+<p>第十一章：websocket开发</p>
+<p>http的缺点：半双工，协议复杂，长轮询容易受攻击</p>
+<p>websocket：全双工；对代理，防火墙，路由器透明；协议简单（没有cookie，头部信息，身份验证）；没有安全开销；ping/pong保活；实时推送，无需轮询</p>
+<p>流程：client先使用http协议发起一次协议升级请求，Upgrade：websocket，server回复协议升级，即握手成功，所在netty里面需要判断消息类型（http请求消息，还是websocket的消息）,js好像没有发送ping的api，可以在server发送ping，接收client的pong</p>
+<p>核心类：</p>
+<p>WebSocketFrame:websocket 通信的抽象消息体（有关闭帧/文本/二进制/ping/pong消息等实现）</p>
+<p>WebSocketServerHandshakerFactory 构建协议升级请求的response，并动态加入WebSocketEncoder，WebSocketDecoder</p>
+<p>第十二章：私有协议开发</p>
+<p>定义消息结构，开发编解码器，开发消息处理器，处理自己关心的数据，然后放行数据，组合成client/server</p>
+<p>LengthFieldBasedFrameDecoder：定长分割器，要除去本身代表长度的字节长度，</p>
+<p>例如：|code（4B）|lenght（4B）|1B|2B|3B|4B| 放到ByteBuf之后readableBytes是18，除去code和length之后的协议长度是10</p>
+<p>MesagePack的限制是必须要使用Message注解，对于复杂对象+历史遗留原因，可能会出现某些对象无法加上该注解</p>
+<p>fireChannelRead，fireXXX channel链放行</p>
+<p>源码解读：</p>
+<p>ByteBuf：缓冲区</p>
+<p>堆外内存：I/O通信的时候少一次用户进程到内核的复制，高性能，但是内存回收不方便</p>
+<p>堆内存：用于I/O通信的时候，需要复制到内核的缓冲区，影响性能，但是内存管理方便</p>
+<p>池化内存区：对于高并发的情况，频繁申请/释放大的内存块影响性能，所以有了池化内存区，可以复用内存区，预先申请一大块的内存区域，分割成若干chunk，chuank再分为若干page，page组织方式是二叉树</p>
+<p>非池化内存：每次都重新开辟一块内存</p>
+<p>Channel/Unsafe</p>
+<p>channel负责链路的建立/关闭，读写，具体实现由Unsafe实现，可以获取eventloop</p>
+<p>ChannelPipeline/ChannelHandler</p>
+<p>ChannelPipeline用链表的形式组织ChannelHandler，支持动态增删改查</p>
+<p>EventLoop</p>
+<p>处理I/O任务跟非IO任务</p>
+<p>第二十章：netty 架构：</p>
+<p>高性能：异步非阻塞IO，堆外直接内存的使用，内存池的使用，环形缓冲区，reactor模型，正确的处理并发</p>
+<p>可靠：读写空闲时间的心跳检测</p>
+<p>第二十一章：多线程在netty中的使用</p>
+<p>synchronized() {</p>
+<blockquote>
+<p>while（conditon）{</p>
+<p>await();</p>
+<p>}</p>
+</blockquote>
+<p>}</p>
+<p>volatile 变量线程修改可见，避免指令重排</p>
+<p>结合AtomicIntegerFiledUpdater ，实现volatile变量的并发更新问题</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Mockito单元测试</title>
+    <url>/2017/10/07/Mockito%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E5%A5%97%E8%B7%AF/</url>
+    <content><![CDATA[<h2 id="Mokcito单元测试"><a href="#Mokcito单元测试" class="headerlink" title="Mokcito单元测试"></a>Mokcito单元测试</h2><blockquote>
+<p>reference : <a href="http://static.javadoc.io/org.mockito/mockito-core/2.10.0/org/mockito/Mockito.html" target="_blank" rel="external">mockito doc</a></p>
+</blockquote>
+<h3 id="单元测试why？"><a href="#单元测试why？" class="headerlink" title="单元测试why？"></a>单元测试why？</h3><ul>
+<li>发现问题的成本最低</li>
+<li>调教你的编程习惯</li>
+<li>保证代码质量<a id="more"></a>
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3></li>
+<li>语法简洁，使用简单，易上手</li>
+<li>比较有测试的思维（无法随意Mock）<h3 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h3></li>
+<li>不能mock静态方法</li>
+<li>不能mock构造方法</li>
+<li>不能mock equals()，hashCode()</li>
+<li>不能mock final类 ， final方法</li>
+<li>不能mock私有方法，可以把私有，变成protected<br>，若你需要mock私有，可能是你的程序还不够OO (Object Oriented)<h3 id="常规用法"><a href="#常规用法" class="headerlink" title="常规用法"></a>常规用法</h3><h4 id="大体蓝图"><a href="#大体蓝图" class="headerlink" title="大体蓝图"></a>大体蓝图</h4>当你需要桩（取代某个依赖）的时候，你可以用两种方式来模拟桩，spy &amp; mock</li>
+<li><p>spy</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">MockedObject object = new MockedObject();  </div><div class="line">MockedObject spiedObject = Mockito.spy(object);</div></pre></td></tr></table></figure>
+</li>
+<li><p>mock  </p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">MockedObject mockedObject = Mockito.mock(MockedObject.class);</div></pre></td></tr></table></figure>
+</li>
+<li><p>两者的区别：    </p>
+<p>当你使用spy来获取到一个桩的时候，你在执行某个方法的时候，spy的对象都会==真正的去执行方法内的代码==。  </p>
+<p>而当桩是通过mock获取到的话，mock的对象的所有属性都为空，所有方法的返回值都是返回类型的默认值（如对象类型的默认值是null），==方法里的代码不会执行==。 </p>
+<p>其实这点区别是可以从代码层面上看出来的，spy的时候先拿到了一个对象，然后对对象进行spy，而mock的时候使用的则是字节码。  </p>
+</li>
+<li>两者之间的效果也可以互相转化<br>  spy类型的可以通过 <figure class="highlight plain"><figcaption><span>``` ，使得代码不被执行，mock类型可以通过 ``` doRealCallMethod() ``` ,使得代码被执行，所以spy和mock的界限其实并不清晰</span></figcaption><table><tr><td class="code"><pre><div class="line">- 代码示例  </div><div class="line">  被mock和spy的类</div></pre></td></tr></table></figure></li>
+</ul>
+<p>class TestMock{</p>
+<pre><code>public void t1 (String ss) {
+    System.out.println(&quot;hh&quot;+ss);
+}
+
+public String t2 (String ss) {
+    return &quot;hh&quot;+ss;
+}
+
+public Boolean t3() {
+    return true;
+}
+
+public String t4(MockParam mockParam) {
+
+    return mockParam.name;
+}
+
+public String t5(MockParam mockParam , String s) {
+    return s;
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">参数类（在上面的类中的某些方法的参数）</div></pre></td></tr></table></figure></p>
+<p>class MockParam{</p>
+<pre><code>String name;
+
+int age;
+
+public MockParam(String name) {
+    this.name = name;
+}
+
+@Override
+public boolean equals(Object obj) {
+    obj = (MockParam)obj;
+    if(this == obj || this.name.equals(((MockParam) obj).name)) {
+        return true;
+    }
+    return false;
+}
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">mock样例  </div><div class="line">所有方法的返回都是方法的默认类型，方法内的代码不会被执行</div></pre></td></tr></table></figure></p>
+<p>public void test2() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;a&quot;);
+
+System.out.println(mock.t2(&quot;b&quot;));
+
+System.out.println(mock.t3());
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;666&quot;);
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;777&quot;);
+
+System.out.println(mock.t2(&quot;c&quot;));
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">spy样例  </div><div class="line">所有方法的代码都会被执行，并正常返回</div></pre></td></tr></table></figure>
+<p>public void test3() {</p>
+<pre><code>TestMock mock1 = new TestMock();
+
+TestMock spyTest = spy(mock1);
+
+spyTest.t1(&quot;c&quot;);
+
+System.out.println(spyTest.t2(&quot;d&quot;));
+
+System.out.println(spyTest.t3());
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">  </div><div class="line">#### 参数匹配 </div><div class="line">- 通常情况下，参数匹配使用的equals方法</div></pre></td></tr></table></figure></p>
+<p> @Test<br>public void test4() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+when(mock.t2(&quot;c&quot;)).thenReturn(&quot;777&quot;);
+
+System.out.println(mock.t2(&quot;d&quot;));//d,c equals = false
+</code></pre><p>}</p>
+<p>@Test<br>public void test5() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+when(mock.t4(mockParam)).thenReturn(&quot;555&quot;);
+
+System.out.println(mock.t4(mockParam));//equals true
+
+System.out.println(mock.t4(new MockParam(&quot;555&quot;)));//equals false 可以重写equals方法，使之为ture
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 内置参数匹配(常用)</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test6() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+when(mock.t4(any())).thenReturn(&quot;555&quot;);
+
+System.out.println(mock.t4(mockParam));//true
+
+System.out.println(mock.t4(new MockParam(&quot;555&quot;)));//true
+
+when(mock.t2(anyString())).thenReturn(&quot;dddd&quot;);
+
+System.out.println(mock.t2(&quot;aaa&quot;));//return dddd
+
+System.out.println(mock.t2(&quot;bbb&quot;));//return dddd
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 注意</div><div class="line">⚠ :如果有一个参数使用了参数匹配器，那所有参数都得使用参数匹配器</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test7() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+//when(mock.t5(any() , &quot;6666&quot;)).thenReturn(&quot;666&quot;); //no
+when(mock.t5(any() , anyString())).thenReturn(&quot;666&quot;);  //yes
+
+System.out.println(mock.t5(mockParam , &quot;ddd&quot;));
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 自定义参数匹配器，先实现参数匹配器的接口，根据需要在matches里返回true or false</div></pre></td></tr></table></figure></p>
+<p>//定义参数匹配器<br>class MockParamArgMatcher implements ArgumentMatcher<mockparam> {</mockparam></p>
+<pre><code>@Override
+public boolean matches(MockParam mockParam) {
+
+    if(mockParam.name.equals(&quot;666&quot;)) {
+        return true;
+    }
+
+    return false;
+}
+</code></pre><p>}<br>//使用匹配器<br>@Test<br>public void test9() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;666&quot;);
+
+when(mock.t4(argThat(new MockParamArgMatcher()))).thenReturn(&quot;666666666&quot;);
+
+System.out.println(mock.t4(mockParam));
+</code></pre><p>}</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 附加参数匹配器(参数验证)</div></pre></td></tr></table></figure>
+<p>@Test<br>public void test8() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;555&quot;);
+
+//在此处可以做入参的逻辑校验
+//when(mock.t5(any() , eq(&quot;6666&quot;))).thenReturn(&quot;666&quot;);  //yes
+
+when(mock.t5(any() , not( and( eq(&quot;6666&quot;),eq(&quot;444&quot;))) ) ).thenReturn(&quot;666&quot;);  //yes
+
+System.out.println(mock.t5(mockParam , &quot;6667&quot;));
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 官网推荐的参数验证方式（很好用，使用这个差不多就可以取代断点调试了）</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test10() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+MockParam mockParam = new MockParam(&quot;666&quot;);
+
+MockParam mockParam1 = new MockParam(&quot;777&quot;);
+
+when(mock.t4(any())).thenReturn(&quot;666666666&quot;);
+
+System.out.println(mock.t4(mockParam1));
+
+//参数捕捉器，可以捕捉该类型的入參
+ArgumentCaptor&lt;MockParam&gt; captor = ArgumentCaptor.forClass(MockParam.class);
+
+//这条语句一定要执行
+verify(mock).t4(captor.capture());
+
+System.out.println(captor.getAllValues().size());
+
+assertEquals(&quot;666&quot; , captor.getValue().name);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">#### 其他常规套路</div><div class="line">- 验证调用方法的次数</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test11() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;1&quot;);
+mock.t1(&quot;2&quot;);
+mock.t1(&quot;3&quot;);
+mock.t1(&quot;4&quot;);
+mock.t1(&quot;5&quot;);
+mock.t1(&quot;6&quot;);
+mock.t1(&quot;7&quot;);
+mock.t1(&quot;8&quot;);
+
+verify(mock,times(8)).t1(anyString());
+verify(mock,atLeast(2)).t1(anyString());
+verify(mock,atMost(9)).t1(anyString());
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- 验证方法执行的顺序</div></pre></td></tr></table></figure></p>
+<p>@Test<br>public void test14() {</p>
+<pre><code>TestMock mock = mock(TestMock.class);
+
+mock.t1(&quot;&quot;);
+mock.t2(&quot;&quot;);
+
+InOrder inOrder = Mockito.inOrder(mock);
+
+inOrder.verify(mock).t1(&quot;&quot;);
+inOrder.verify(mock).t2(&quot;&quot;);
+</code></pre><p>}<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line"></div><div class="line">- doReturn</div></pre></td></tr></table></figure></p>
+<p> @Test<br>public void test16() {</p>
+<pre><code>List list = new LinkedList();
+List spy = spy(list);
+//spy 模式会执行代码，但目前list为空
+//when(spy.get(0)).thenReturn(&quot;foo&quot;);   //IndexOutOfBoundsException
+//相当于mock
+doReturn(&quot;foo&quot;).when(spy).get(0);
+</code></pre><p>}</p>
+<p>```</p>
+<hr>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>测试</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>国庆随笔</title>
+    <url>/2017/10/04/HelloWorld/</url>
+    <content><![CDATA[<p>今年国庆+中秋，终于回家了，以前在学校的时候，国庆七天假一般都待在学校，主要是因为那会儿还有寒暑假，所以国庆的七天并没有多大的吸引力。但现在不一样了，现在就只有一些零零散散的假期了。</p>
+<p>转眼出来工作半年了，也毕业了三个月了，实习三个月，试用三个月，我也经常反思一些东西，但很少写下来，今天接着这个blog的东风，随便写写。<br><a id="more"></a>  </p>
+<h4 id="关于blog"><a href="#关于blog" class="headerlink" title="关于blog"></a>关于blog</h4><p>其实很早之前就想玩玩这个git pages，但总是浅尝辄止，主要是Vbox上的ubuntu确实有点恶心(没有装那个增强功能，装上了就挺好的)，而我又不想在工作本上搭这些环境，昨天花了一个下午用hexo把git pages搭了起来，感觉搭这个并不难，难的是找到一个酷一点的模板毕竟【看脸】【尴尬】。</p>
+<h4 id="生活琐事"><a href="#生活琐事" class="headerlink" title="生活琐事"></a>生活琐事</h4><p>今年国庆老大也回家了，好像大学以来第一次中秋大家都在吧，不过老大就放假了4天，而且家里还在搞装修，整的有点乱，今天早上吃完饭老大就回福州了，临走前我们打了个赌，今年过年回家时，没有腹肌的要给有腹肌的2000块钱红包【哈哈】。记得之前给老大推荐过keep，然后今年回来的时候老大已经减了15斤了，看来这2000块钱还有是有点压力的【嘿嘿】</p>
+<p>今年回家也少不了走走亲戚，真的和以前不一样了，现在的问题都是，有女朋友没，工资怎么样，待遇怎么样，当然偶尔也有几句累不累。</p>
+<h4 id="朋友圈"><a href="#朋友圈" class="headerlink" title="朋友圈"></a>朋友圈</h4><p>这个我觉得有必要单独拿出来讲了，我只想说大兄弟们你们太会玩了，上山下海，飞天遁地,横跨沙漠，深海潜水，然后各种晒照，真的是。。。【好羡慕啊】【哈哈】，话说国庆已经到了第5天了，第一天我是在动车上过的，然后第一天躺尸，第二天躺尸，第三，四，五天还是躺尸【哎呀我去，过分了】，不过躺尸不是睡觉啊，就是宅在家里把玩电脑【把玩这个词不错】，其实我也不是不想出门，只是因为‘就不想就出门啊’【尴尬】【哈哈】。</p>
+<h4 id="程序猿"><a href="#程序猿" class="headerlink" title="程序猿"></a>程序猿</h4><p>一直在网上看到一些段子，程序猿996各种加班各种猝死，产品改需求，各种要疯掉崩溃。老实说在有赞的这段日子里并没有体会到这些东西，早9点晚9点也还行吧，当然可能是我还单身的原因（难怪有道面试题叫你有女朋友吗），还有产品改需求，这个其实不好说，但是如果你能确定产品不是个傻子，而且他的修改是经过思考，重点是如果你也觉得这样改是对的，那就改吧。。。。</p>
+<h4 id="忘了说的正能量【嘿嘿】"><a href="#忘了说的正能量【嘿嘿】" class="headerlink" title="忘了说的正能量【嘿嘿】"></a>忘了说的正能量【嘿嘿】</h4><p>其实要不是那天在泥土里打过滚，受了伤还依然不想放弃，我都想不到这个–竞技精神</p>
+<p>我觉得竞技就是想赢敢赢不服输不怕输，我觉得我算是一个有竞技精神的人，只不过在这之前一直没把这个精神划到自己身上，记得大学之前打字还要在键盘上找，五音也不全，然而只要有计算机的比赛我就去敢水一波，连院里的才艺大赛都敢上去唱歌，就算从头到尾没跟上一次伴奏我还是把他给唱完了，我觉得我并不在乎别人的眼光，但我在意别人在背后怎么说我（突然想到的，不知道你们理解了没，感觉有点说不通，算了，先这样）【尴尬】，所以当我意识到这个竞技精神的存在时，我就决定以后要带着这种精神上路。当你还没站在最高峰的时候，追逐胜利其实是一个自我提升的过程，而且也会是一种双赢的良好循环。</p>
+<h3 id="试着打赏一下，说不定会有惊喜哦【嘿嘿】"><a href="#试着打赏一下，说不定会有惊喜哦【嘿嘿】" class="headerlink" title="试着打赏一下，说不定会有惊喜哦【嘿嘿】"></a>试着打赏一下，说不定会有惊喜哦【嘿嘿】</h3>]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>闲言碎语</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>大学四年简历</title>
+    <url>/2017/03/18/%E5%A4%A7%E5%AD%A6%E5%9B%9B%E5%B9%B4%E7%AE%80%E5%8E%86/</url>
+    <content><![CDATA[<p><strong>教育背景</strong> 时间：2013.09-2017.07 南昌工程学院 软件工程（本科） 中共党员 班级学习委员</p>
+<p>主要课程：数据结构，操作系统，组成原理，网络原理，编译原理，离散数学，线代，软件工程，编程课等</p>
+<p><strong>奖项证书</strong></p>
+<p>专业方面：</p>
+<p> 作品《基于android的智能蓝牙按摩椅系统》在2016年（第9届）中国大学生计算机设计大赛获三等奖<a id="more"></a></p>
+<p> 参加第五届全国大学生计算机应用能力与信息素养大赛获得计算机基础赛项本科组二等奖</p>
+<p> 参加江西省信息技术知识竞赛获得（专业类）本科组一等奖</p>
+<p> 参加南昌工程学院软件设计大赛获得二等奖</p>
+<p>学习方面：</p>
+<p> 获得2015-2016学年度国家奖学金</p>
+<p> 获得2014-2015学年度国家奖学金</p>
+<p> 获得2013-2014学年度国家励志奖学金</p>
+<p> 获得六个学期的普通奖学金，三次一等奖学金，三次二等奖学金，另获得单项科技奖学金</p>
+<p>生活方面：曾获得”三好学生”，”优秀学生干部”等荣誉称号，参加才艺大赛，演讲比赛也都获得过奖项，参加省级，校级桥</p>
+<p>牌比赛也都获得了名次，党员骨干培训合格。</p>
+<p>编程语言：熟练使用 C、java(web，j2ee,android) ，html，js，css</p>
+<p>开源框架：了解 struts1，struts2，hibernate，spring</p>
+<p>操作系统：熟练使用 windows，了解 Linux 的基本使用</p>
+<p><strong>项目经验</strong></p>
+<h4 id="016-12-2017-01-基于-java-swing-的远程控制系统"><a href="#016-12-2017-01-基于-java-swing-的远程控制系统" class="headerlink" title="016/12 - 2017/01 基于 java swing 的远程控制系统"></a>016/12 - 2017/01 基于 java swing 的远程控制系统</h4><p>责任描述：从简单的界面设计，到具体功能的实现都是独立开发，通过自定义通信协议实现了 socket</p>
+<p>长连接，大大减少了图片传输延迟，改变传统对象流传输，大大减少传输的流量。</p>
+<p>项目简介：通过 java swing 的界面，socket 长链接和 java 中的 robot 类实现远程电脑的桌面监视和</p>
+<p>鼠标键盘的控制</p>
+<p>开发核心:java GUI 编程，socket 网络编程，自定义通信协议，多线程</p>
+<h4 id="2016-08-–-2017-02-基于-APPcan-开发的智能蓝牙按摩椅"><a href="#2016-08-–-2017-02-基于-APPcan-开发的智能蓝牙按摩椅" class="headerlink" title="2016/08 – 2017/02 基于 APPcan 开发的智能蓝牙按摩椅"></a>2016/08 – 2017/02 基于 APPcan 开发的智能蓝牙按摩椅</h4><p>责任描述：负责遥控器模块实现手机蓝牙与单片机蓝牙 BLE 的交互，和社交模块的网络接口文档整理。</p>
+<p>通过 H5 开发跨平台的应用，在开发过程中通过一些容错处理，提高用户体验。</p>
+<p>项目简介：上海按摩椅公司的实际项目，解决传统按摩椅的一些弊病，让按摩椅更加个性化，定制化。</p>
+<p>通过 appcan 平台开发跨平台的 app，实现智能手机通过蓝牙和自定义协议实现对蓝牙按摩椅的控制，</p>
+<p>社交功能的数据来自公司提供的接口。</p>
+<p>开发核心:基于 AppCan 平台的蓝牙开发和 H5 编程。</p>
+<h4 id="2015-08-2015-09-开发企业门户网站-CMS"><a href="#2015-08-2015-09-开发企业门户网站-CMS" class="headerlink" title="2015/08 - 2015/09 开发企业门户网站 CMS"></a>2015/08 - 2015/09 开发企业门户网站 CMS</h4><p>责任描述：根据企业的界面需求和功能需求独立开发。</p>
+<p>项目简介：通过开源的内容管理系统搭建企业门户网站，实现企业发布消息，审核消息等功能</p>
+<p>开发核心:jeecms 开源框架和网页编程</p>
+<h4 id="2015-07-2015-08-基于-Android-的智能蓝牙按摩椅"><a href="#2015-07-2015-08-基于-Android-的智能蓝牙按摩椅" class="headerlink" title="2015/07 - 2015/08 基于 Android 的智能蓝牙按摩椅"></a>2015/07 - 2015/08 基于 Android 的智能蓝牙按摩椅</h4><p>责任描述：独立开发 Android 端，和 web 后台。移动端包括遥控器和社交模块，web 后台包括资源管理，</p>
+<p>用户管理和提供相应的移动端接口，与移动端的通信采用轻量级的 json 格式的数据。</p>
+<p>项目简介：通过安卓手机的蓝牙给单片机上的蓝牙模块发送指令，(自定义通信协议)实现控制，社交模</p>
+<p>块主要实现文章评论回复等功能</p>
+<p>开发核心:Android 蓝牙开发，java web（Servlet，Hibernate，mysql），java 网络编程，多线程</p>
+<h4 id="2015-04-2015-05-太阳能数据显示"><a href="#2015-04-2015-05-太阳能数据显示" class="headerlink" title="2015/04 - 2015/05 太阳能数据显示"></a>2015/04 - 2015/05 太阳能数据显示</h4><p>责任描述：根据用户的界面需求和功能需求进行开发，通过厂家提供的接口获取数据并封装，然后再在</p>
+<p>web 上以图表的方式显示</p>
+<p>项目简介：气象局的实际项目，因为设备来自不同的厂家，所以当需要分析对比数据时就要到各自厂商</p>
+<p>提供的网站上去查询，十分麻烦，因此开发该系统。</p>
+<p>开发核心：java web（Servlet，jsp） ，js 图表（ highchart），Ajax</p>
+<h4 id="2014-12-2015-01-网上编程系统"><a href="#2014-12-2015-01-网上编程系统" class="headerlink" title="2014/12 - 2015/01 网上编程系统"></a>2014/12 - 2015/01 网上编程系统</h4><p>责任描述：使用 MVC 模式独立开发。基于用户-角色-权限的用户管理和资源-权限的资源管理，提高系</p>
+<p>统的安全性。</p>
+<p>项目简介：用户通过浏览器登录该系统，在系统中选择自己要做的题目，然后提交相应的解题代码到后</p>
+<p>台，再由系统编译运行并判断正误，后台编译运行使用 gcc 编译器。</p>
+<p>开发核心:java Runtime 类，java web（Servlet，Jsp，MySQL）</p>
+<p><strong>自我评价</strong></p>
+<p> 有扎实的 java 基础，了解设计模式，能使用 java 独立开发网站，app，调试找 bug，与团队沟通,有集体荣誉感，学习能力</p>
+<p>和抗压能力较强。大学期间多次参与导师项目开发，参加国家级计算机比赛并获奖。虽然目前的眼界和阅历还不足以使我成</p>
+<p>为一个领导者，但我一定是一个优秀的执行者，而且一直在前进的路上。</p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>经历</tag>
+      </tags>
+  </entry>
+</search>
